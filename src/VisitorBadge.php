@@ -84,20 +84,39 @@ class VisitorBadge implements CommandInterface
             $logo = @imagecreatefromstring($logoData);
 
             if ($logo !== false) {
-                $logoWidth = 60;
-                $logoHeight = 40;
+                $sourceWidth = imagesx($logo);
+                $sourceHeight = imagesy($logo);
+
+                $maxLogoWidth = 72;
+                $maxLogoHeight = 62;
+
+                $scale = min(
+                    $maxLogoWidth / $sourceWidth,
+                    $maxLogoHeight / $sourceHeight
+                );
+
+                $logoWidth = intval($sourceWidth * $scale);
+                $logoHeight = intval($sourceHeight * $scale);
+
+                $logoX = $this->width - $logoWidth - 12;
+
+                /*
+         * Slightly overlap the logo into the badge body.
+         * Header height is currently 50px.
+         */
+                $logoY = 8;
 
                 imagecopyresampled(
                     $image,
                     $logo,
-                    $this->width - $logoWidth - 10,
-                    5,
+                    $logoX,
+                    $logoY,
                     0,
                     0,
                     $logoWidth,
                     $logoHeight,
-                    imagesx($logo),
-                    imagesy($logo)
+                    $sourceWidth,
+                    $sourceHeight
                 );
 
                 imagedestroy($logo);
