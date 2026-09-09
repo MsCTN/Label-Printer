@@ -8,7 +8,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
     {
         $badge = new VisitorBadge(
             696,
-            709,
+            590,
             [
                 'visitor_name' => 'John Doe',
                 'company_name' => 'Example Ltd',
@@ -22,7 +22,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
 
         $this->assertTrue(is_resource($image) || is_object($image));
         $this->assertEquals(696, imagesx($image));
-        $this->assertEquals(709, imagesy($image));
+        $this->assertEquals(590, imagesy($image));
 
         imagedestroy($image);
     }
@@ -33,7 +33,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
 
         $badge = new VisitorBadge(
             696,
-            709,
+            590,
             [
                 'visitor_name' => 'Stuart Burgess',
                 'company_name' => 'A&D Buildings Ltd',
@@ -48,7 +48,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
 
         $this->assertTrue(is_resource($image) || is_object($image));
         $this->assertEquals(696, imagesx($image));
-        $this->assertEquals(709, imagesy($image));
+        $this->assertEquals(590, imagesy($image));
 
         imagedestroy($image);
     }
@@ -59,7 +59,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
 
         new VisitorBadge(
             696,
-            709,
+            590,
             [
                 'visitor_name' => 'John Doe',
                 'company_name' => 'Example Ltd',
@@ -77,7 +77,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
 
         $badge = new VisitorBadge(
             696,
-            709,
+            590,
             [
                 'visitor_name' => 'Stuart Burgess',
                 'company_name' => 'A&D Buildings Ltd',
@@ -94,7 +94,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
         $output = stream_get_contents($stream);
         fclose($stream);
 
-        $this->assertEquals(62879, strlen($output));
+        $this->assertEquals(54551, strlen($output));
         $this->assertEquals(
             '1b6961301b401b33301b2a48b802',
             bin2hex(substr($output, 0, 14))
@@ -102,11 +102,11 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
         $this->assertContains(chr(27) . 'k' . chr(10), $output);
         $this->assertContains(chr(27) . 'E', $output);
         $this->assertContains(chr(27) . 'X' . chr(0) . chr(75) . chr(0), $output);
-        $this->assertContains(chr(27) . 'X' . chr(0) . chr(58) . chr(0), $output);
         $this->assertContains(chr(27) . 'X' . chr(0) . chr(50) . chr(0), $output);
-        $this->assertContains(chr(27) . '$' . chr(190) . chr(0), $output);
-        $this->assertContains(chr(27) . '(V' . chr(2) . chr(0) . chr(162) . chr(0), $output);
-        $this->assertContains(chr(27) . '(V' . chr(2) . chr(0) . chr(83) . chr(2), $output);
+        $this->assertContains(chr(27) . 'X' . chr(0) . chr(38) . chr(0), $output);
+        $this->assertContains(chr(27) . '$' . chr(198) . chr(0), $output);
+        $this->assertContains(chr(27) . '(V' . chr(2) . chr(0) . chr(130) . chr(0), $output);
+        $this->assertContains(chr(27) . '(V' . chr(2) . chr(0) . chr(94) . chr(0), $output);
         $this->assertEquals(chr(12), substr($output, -1));
     }
 
@@ -119,7 +119,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
 
         $badge = new VisitorBadge(
             696,
-            709,
+            590,
             [
                 'visitor_name' => 'Stuart Burgess',
                 'company_name' => 'A&D Buildings Ltd',
@@ -135,10 +135,11 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
         $output = stream_get_contents($stream);
         fclose($stream);
 
-        $this->assertEquals(62879, strlen($output));
-        $this->assertContains(chr(27) . 'X' . chr(0) . chr(83) . chr(0), $output);
-        $this->assertContains(chr(27) . '$' . chr(36) . chr(0), $output);
-        $this->assertContains(chr(27) . '(V' . chr(2) . chr(0) . chr(162) . chr(0), $output);
+        $this->assertEquals(54551, strlen($output));
+        $this->assertContains(chr(27) . 'X' . chr(0) . chr(75) . chr(0), $output);
+        $this->assertContains(chr(27) . 'X' . chr(0) . chr(38) . chr(0), $output);
+        $this->assertContains(chr(27) . '$' . chr(48) . chr(0), $output);
+        $this->assertContains(chr(27) . '(V' . chr(2) . chr(0) . chr(130) . chr(0), $output);
         $this->assertEquals(chr(12), substr($output, -1));
     }
 }

@@ -64,72 +64,118 @@ class VisitorBadge implements CommandInterface
     protected function getLayout()
     {
         $scaleX = $this->width / 696;
-        $scaleY = $this->height / 709;
+        $scaleY = $this->height / 590;
         $scale = min($scaleX, $scaleY);
         $hasPhoto = $this->hasReadableImage('visitor_photo');
-
-        $textX = $hasPhoto ? $this->scaledX(190) : $this->scaledX(36);
-        $rightPadding = $this->scaledX(24);
-        $maxTextWidth = max(1, $this->width - $textX - $rightPadding);
-        $nameSize = $this->fitNativeSize($this->data['visitor_name'], $maxTextWidth, 83, 50);
-        $companySize = $this->fitNativeSize($this->data['company_name'], $maxTextWidth, 58, 42);
-        $hostSize = $this->fitNativeSize('Host: ' . $this->data['host_name'], $maxTextWidth, 58, 42);
-        $validitySize = $this->fitNativeSize('Valid on: ' . $this->data['validity_date'], $maxTextWidth, 50, 38);
+        $left = $this->scaledX(30);
+        $right = $this->scaledX(30);
+        $textX = $hasPhoto ? $this->scaledX(190) : $this->scaledX(54);
+        $identityWidth = max(1, $this->width - $textX - $right);
+        $footerWidth = max(1, $this->width - ($left * 2));
+        $nameSize = $this->fitNativeSize($this->data['visitor_name'], $identityWidth, 75, 50);
+        $companySize = $this->fitNativeSize($this->data['company_name'], $identityWidth, 50, 38);
+        $detailX = $hasPhoto ? $this->scaledX(238) : $this->scaledX(102);
+        $detailWidth = max(1, $this->width - $detailX - $right);
+        $hostSize = $this->fitNativeSize($this->data['host_name'], $detailWidth, 42, 33);
+        $validitySize = $this->fitNativeSize($this->data['validity_date'], $detailWidth, 42, 33);
 
         return [
             'header' => [
                 'x' => 0,
-                'y' => $this->scaledY(34),
+                'y' => $this->scaledY(25),
                 'width' => $this->width,
-                'height' => max(1, $this->scaledY(100)),
+                'height' => max(1, $this->scaledY(90)),
                 'text' => 'VISITOR',
                 'text_scale' => max(2, intval(round(5 * $scale)))
             ],
             'logo' => [
-                'max_width' => $this->scaledX(92),
-                'max_height' => $this->scaledY(82),
-                'right' => $this->scaledX(22),
-                'y' => $this->scaledY(43)
+                'max_width' => $this->scaledX(86),
+                'max_height' => $this->scaledY(70),
+                'right' => $this->scaledX(34),
+                'y' => $this->scaledY(34)
             ],
             'photo' => [
-                'x' => $this->scaledX(24),
-                'y' => $this->scaledY(170),
-                'width' => $this->scaledX(142),
-                'height' => $this->scaledY(170)
+                'x' => $this->scaledX(26),
+                'y' => $this->scaledY(132),
+                'width' => $this->scaledX(145),
+                'height' => $this->scaledY(180),
+                'border' => $this->scaledX(3)
             ],
-            'text_x' => $textX,
+            'rule' => [
+                'x' => $textX,
+                'y' => $this->scaledY(248),
+                'width' => $this->scaledX(238),
+                'height' => max(1, $this->scaledY(2))
+            ],
+            'icons' => [
+                'host' => [
+                    'x' => $hasPhoto ? $this->scaledX(190) : $this->scaledX(54),
+                    'y' => $this->scaledY(292),
+                    'size' => $this->scaledX(32)
+                ],
+                'validity' => [
+                    'x' => $hasPhoto ? $this->scaledX(190) : $this->scaledX(54),
+                    'y' => $this->scaledY(444),
+                    'size' => $this->scaledX(32)
+                ]
+            ],
+            'bottom_wave' => [
+                'height' => $this->scaledY(52)
+            ],
             'lines' => [
                 'visitor_name' => [
                     'text' => $this->data['visitor_name'],
-                    'y' => $this->scaledY(162),
+                    'x' => $textX,
+                    'y' => $this->scaledY(130),
                     'size' => $nameSize,
                     'preview_size' => $this->previewFontSize($nameSize),
-                    'max_width' => $maxTextWidth,
+                    'max_width' => $identityWidth,
                     'bold' => true
                 ],
                 'company_name' => [
                     'text' => $this->data['company_name'],
-                    'y' => $this->scaledY(240),
+                    'x' => $textX,
+                    'y' => $this->scaledY(198),
                     'size' => $companySize,
                     'preview_size' => $this->previewFontSize($companySize),
-                    'max_width' => $maxTextWidth,
+                    'max_width' => $identityWidth,
+                    'bold' => false
+                ],
+                'host_label' => [
+                    'text' => 'Host:',
+                    'x' => $detailX,
+                    'y' => $this->scaledY(282),
+                    'size' => $this->outlineSize(38),
+                    'preview_size' => $this->previewFontSize(38),
+                    'max_width' => $detailWidth,
                     'bold' => false
                 ],
                 'host_name' => [
-                    'text' => 'Host: ' . $this->data['host_name'],
-                    'y' => $this->scaledY(365),
+                    'text' => $this->data['host_name'],
+                    'x' => $detailX,
+                    'y' => $this->scaledY(312),
                     'size' => $hostSize,
                     'preview_size' => $this->previewFontSize($hostSize),
-                    'max_width' => $maxTextWidth,
+                    'max_width' => $detailWidth,
+                    'bold' => true
+                ],
+                'validity_label' => [
+                    'text' => 'Valid on:',
+                    'x' => $detailX,
+                    'y' => $this->scaledY(434),
+                    'size' => $this->outlineSize(38),
+                    'preview_size' => $this->previewFontSize(38),
+                    'max_width' => $detailWidth,
                     'bold' => false
                 ],
                 'validity_date' => [
-                    'text' => 'Valid on: ' . $this->data['validity_date'],
-                    'y' => $this->scaledY(595),
+                    'text' => $this->data['validity_date'],
+                    'x' => $detailX,
+                    'y' => $this->scaledY(464),
                     'size' => $validitySize,
                     'preview_size' => $this->previewFontSize($validitySize),
-                    'max_width' => $maxTextWidth,
-                    'bold' => false
+                    'max_width' => $detailWidth,
+                    'bold' => true
                 ]
             ]
         ];
@@ -142,12 +188,12 @@ class VisitorBadge implements CommandInterface
 
     protected function scaledY($value)
     {
-        return intval(round($value * ($this->height / 709)));
+        return intval(round($value * ($this->height / 590)));
     }
 
     protected function outlineSize($baseSize)
     {
-        $scale = min($this->width / 696, $this->height / 709);
+        $scale = min($this->width / 696, $this->height / 590);
         $target = $baseSize * $scale;
         $sizes = [33, 38, 42, 46, 50, 58, 67, 75, 83, 92, 100, 117, 133, 150, 167, 200];
         $selected = $sizes[0];
@@ -208,6 +254,7 @@ class VisitorBadge implements CommandInterface
         $white = imagecolorallocate($image, 255, 255, 255);
         $black = imagecolorallocate($image, 0, 0, 0);
         $red = imagecolorallocate($image, 255, 0, 0);
+        $iconColor = imagecolorallocate($image, 36, 45, 51);
 
         imagefill($image, 0, 0, $white);
 
@@ -235,13 +282,29 @@ class VisitorBadge implements CommandInterface
             $this->drawPhoto($image, $layout['photo']);
         }
 
+        $this->drawPersonIcon($image, $layout['icons']['host'], $iconColor);
+        $this->drawCalendarIcon($image, $layout['icons']['validity'], $iconColor);
+
         if ($includeText) {
             foreach ($layout['lines'] as $line) {
+                $text = $this->fitText($line['text'], $line['max_width'], $line['size']);
+                $x = $line['x'];
+
+                if (isset($line['align']) && $line['align'] === 'center') {
+                    $x = $this->centerPreviewTextX(
+                        $text,
+                        $line['preview_size'],
+                        $line['bold'],
+                        $line['x'],
+                        $line['max_width']
+                    );
+                }
+
                 $this->drawScaledText(
                     $image,
-                    $layout['text_x'],
+                    $x,
                     $line['y'],
-                    $this->fitText($line['text'], $line['max_width'], $line['size']),
+                    $text,
                     $line['preview_size'],
                     $line['max_width'],
                     $black,
@@ -289,6 +352,193 @@ class VisitorBadge implements CommandInterface
         imagedestroy($logo);
     }
 
+    protected function drawHeaderAccents($image, array $header, $darkRed, $deepRed)
+    {
+        $y = $header['y'];
+        $height = $header['height'];
+
+        imagefilledpolygon(
+            $image,
+            [
+                $this->scaledX(28), $y,
+                $this->scaledX(76), $y,
+                $this->scaledX(22), $y + $height,
+                0, $y + $height
+            ],
+            4,
+            $darkRed
+        );
+
+        imagefilledpolygon(
+            $image,
+            [
+                $this->scaledX(84), $y,
+                $this->scaledX(100), $y,
+                $this->scaledX(44), $y + $height,
+                $this->scaledX(28), $y + $height
+            ],
+            4,
+            $deepRed
+        );
+
+        imagefilledpolygon(
+            $image,
+            [
+                $this->width - $this->scaledX(36), $y,
+                $this->width, $y,
+                $this->width, $y + $height,
+                $this->width - $this->scaledX(88), $y + $height
+            ],
+            4,
+            $darkRed
+        );
+    }
+
+    protected function drawWatermark($image, $color)
+    {
+        $baseY = $this->scaledY(468);
+        $left = $this->scaledX(438);
+        $right = $this->scaledX(678);
+        $top = $this->scaledY(300);
+
+        imagefilledpolygon(
+            $image,
+            [
+                $left, $top,
+                $right, $top,
+                $right - $this->scaledX(34), $top - $this->scaledY(34),
+                $left + $this->scaledX(34), $top - $this->scaledY(34)
+            ],
+            4,
+            $color
+        );
+
+        imagefilledrectangle($image, $left + $this->scaledX(6), $top + $this->scaledY(12), $right - $this->scaledX(6), $top + $this->scaledY(20), $color);
+
+        for ($i = 0; $i < 4; $i++) {
+            $x = $left + $this->scaledX(28 + ($i * 46));
+            imagefilledrectangle($image, $x, $top + $this->scaledY(32), $x + $this->scaledX(18), $baseY, $color);
+        }
+
+        imagefilledrectangle($image, $left, $baseY, $right, $baseY + $this->scaledY(14), $color);
+    }
+
+    protected function drawBottomWave($image, array $layout, $red, $darkRed, $lightGray)
+    {
+        $height = $layout['height'];
+        $top = $this->height - $height;
+
+        imagefilledpolygon(
+            $image,
+            [
+                0, $this->height,
+                0, $top + $this->scaledY(20),
+                $this->scaledX(112), $top + $this->scaledY(10),
+                $this->scaledX(238), $top + $this->scaledY(22),
+                $this->scaledX(338), $this->height,
+            ],
+            5,
+            $lightGray
+        );
+
+        imagefilledpolygon(
+            $image,
+            [
+                0, $this->height,
+                0, $top + $this->scaledY(30),
+                $this->scaledX(110), $top + $this->scaledY(20),
+                $this->scaledX(230), $top + $this->scaledY(34),
+                $this->scaledX(318), $this->height,
+            ],
+            5,
+            $red
+        );
+
+        imagefilledpolygon(
+            $image,
+            [
+                0, $this->height,
+                0, $top + $this->scaledY(48),
+                $this->scaledX(120), $top + $this->scaledY(38),
+                $this->scaledX(230), $top + $this->scaledY(50),
+                $this->scaledX(286), $this->height,
+            ],
+            5,
+            $darkRed
+        );
+    }
+
+    protected function drawRule($image, array $layout, $color)
+    {
+        imagefilledrectangle(
+            $image,
+            $layout['x'],
+            $layout['y'],
+            $layout['x'] + $layout['width'] - 1,
+            $layout['y'] + $layout['height'] - 1,
+            $color
+        );
+    }
+
+    protected function drawPersonIcon($image, array $layout, $color)
+    {
+        $x = $layout['x'];
+        $y = $layout['y'];
+        $size = $layout['size'];
+
+        imagefilledellipse(
+            $image,
+            $x + intval($size * 0.50),
+            $y + intval($size * 0.28),
+            max(3, intval($size * 0.38)),
+            max(3, intval($size * 0.38)),
+            $color
+        );
+
+        imagefilledellipse(
+            $image,
+            $x + intval($size * 0.50),
+            $y + intval($size * 0.78),
+            max(3, intval($size * 0.78)),
+            max(3, intval($size * 0.45)),
+            $color
+        );
+
+        imagefilledpolygon(
+            $image,
+            [
+                $x + intval($size * 0.16), $y + intval($size * 0.92),
+                $x + intval($size * 0.84), $y + intval($size * 0.92),
+                $x + intval($size * 0.74), $y + intval($size * 0.70),
+                $x + intval($size * 0.26), $y + intval($size * 0.70)
+            ],
+            4,
+            $color
+        );
+    }
+
+    protected function drawCalendarIcon($image, array $layout, $color)
+    {
+        $x = $layout['x'];
+        $y = $layout['y'];
+        $size = $layout['size'];
+        $stroke = max(2, intval($size / 8));
+
+        imagesetthickness($image, $stroke);
+        imagerectangle($image, $x + 1, $y + intval($size * 0.14), $x + $size - 1, $y + $size - 1, $color);
+        imageline($image, $x + 1, $y + intval($size * 0.38), $x + $size - 1, $y + intval($size * 0.38), $color);
+        imageline($image, $x + intval($size * 0.28), $y + 1, $x + intval($size * 0.28), $y + intval($size * 0.24), $color);
+        imageline($image, $x + intval($size * 0.72), $y + 1, $x + intval($size * 0.72), $y + intval($size * 0.24), $color);
+        imagesetthickness($image, 1);
+
+        imagefilledrectangle($image, $x + intval($size * 0.23), $y + intval($size * 0.51), $x + intval($size * 0.34), $y + intval($size * 0.62), $color);
+        imagefilledrectangle($image, $x + intval($size * 0.45), $y + intval($size * 0.51), $x + intval($size * 0.56), $y + intval($size * 0.62), $color);
+        imagefilledrectangle($image, $x + intval($size * 0.67), $y + intval($size * 0.51), $x + intval($size * 0.78), $y + intval($size * 0.62), $color);
+        imagefilledrectangle($image, $x + intval($size * 0.23), $y + intval($size * 0.70), $x + intval($size * 0.34), $y + intval($size * 0.81), $color);
+        imagefilledrectangle($image, $x + intval($size * 0.45), $y + intval($size * 0.70), $x + intval($size * 0.56), $y + intval($size * 0.81), $color);
+        imagefilledrectangle($image, $x + intval($size * 0.67), $y + intval($size * 0.70), $x + intval($size * 0.78), $y + intval($size * 0.81), $color);
+    }
+
     protected function drawPhoto($image, array $layout)
     {
         $photo = $this->loadImage($this->data['visitor_photo']);
@@ -297,17 +547,58 @@ class VisitorBadge implements CommandInterface
             return;
         }
 
+        $white = imagecolorallocate($image, 255, 255, 255);
+        $black = imagecolorallocate($image, 0, 0, 0);
+        $border = isset($layout['border']) ? $layout['border'] : 0;
+
+        if ($border > 0) {
+            imagefilledrectangle(
+                $image,
+                $layout['x'] - $border,
+                $layout['y'] - $border,
+                $layout['x'] + $layout['width'] + $border - 1,
+                $layout['y'] + $layout['height'] + $border - 1,
+                $black
+            );
+
+            imagefilledrectangle(
+                $image,
+                $layout['x'] - $border + 1,
+                $layout['y'] - $border + 1,
+                $layout['x'] + $layout['width'] + $border - 2,
+                $layout['y'] + $layout['height'] + $border - 2,
+                $white
+            );
+        }
+
+        $sourceWidth = imagesx($photo);
+        $sourceHeight = imagesy($photo);
+        $targetRatio = $layout['width'] / $layout['height'];
+        $sourceRatio = $sourceWidth / $sourceHeight;
+        $sourceX = 0;
+        $sourceY = 0;
+
+        if ($sourceRatio > $targetRatio) {
+            $cropWidth = intval($sourceHeight * $targetRatio);
+            $cropHeight = $sourceHeight;
+            $sourceX = intval(($sourceWidth - $cropWidth) / 2);
+        } else {
+            $cropWidth = $sourceWidth;
+            $cropHeight = intval($sourceWidth / $targetRatio);
+            $sourceY = intval(($sourceHeight - $cropHeight) / 2);
+        }
+
         imagecopyresampled(
             $image,
             $photo,
             $layout['x'],
             $layout['y'],
-            0,
-            0,
+            $sourceX,
+            $sourceY,
             $layout['width'],
             $layout['height'],
-            imagesx($photo),
-            imagesy($photo)
+            $cropWidth,
+            $cropHeight
         );
 
         imagedestroy($photo);
@@ -511,6 +802,22 @@ class VisitorBadge implements CommandInterface
         return abs($box[2] - $box[0]);
     }
 
+    protected function centerPreviewTextX($text, $fontSize, $bold, $x, $maxWidth)
+    {
+        $fontPath = $this->previewFontPath($bold);
+
+        if ($fontPath !== null && function_exists('imagettfbbox')) {
+            return intval($x + (($maxWidth - $this->trueTypeTextWidth($fontPath, $fontSize, $text)) / 2));
+        }
+
+        return intval($x);
+    }
+
+    protected function centerNativeTextX($text, $size, $x, $maxWidth)
+    {
+        return intval($x + (($maxWidth - $this->nativeTextWidth($text, $size)) / 2));
+    }
+
     protected function fitText($text, $maxWidth, $size)
     {
         $text = (string) $text;
@@ -570,19 +877,27 @@ class VisitorBadge implements CommandInterface
                     new Command\CharSize($line['size'], $font)
                 )->read();
 
+                $text = $this->fitText(
+                    $line['text'],
+                    $line['max_width'],
+                    $line['size']
+                );
+
+                $x = $line['x'];
+
+                if (isset($line['align']) && $line['align'] === 'center') {
+                    $x = $this->centerNativeTextX($text, $line['size'], $line['x'], $line['max_width']);
+                }
+
                 $output .= (
-                    new Command\AbsoluteHorizontalPosition($layout['text_x'])
+                    new Command\AbsoluteHorizontalPosition($x)
                 )->read();
 
                 $output .= (
                     new Command\AbsoluteVerticalPosition($line['y'])
                 )->read();
 
-                $output .= $this->fitText(
-                    $line['text'],
-                    $line['max_width'],
-                    $line['size']
-                );
+                $output .= $text;
             }
 
             return $output;
