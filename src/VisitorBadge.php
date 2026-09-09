@@ -34,13 +34,165 @@ class VisitorBadge implements CommandInterface
             }
         }
 
-        $this->width = $width;
-        $this->height = $height;
+        $this->width = intval($width);
+        $this->height = intval($height);
         $this->data = $data;
     }
 
-
     public function render()
+    {
+        return $this->renderGraphics(true);
+    }
+
+    public function save($path)
+    {
+        $image = $this->render();
+
+        if (! imagepng($image, $path)) {
+            imagedestroy($image);
+
+            throw new \RuntimeException(
+                'Unable to save visitor badge image.'
+            );
+        }
+
+        imagedestroy($image);
+
+        return $path;
+    }
+
+    protected function getLayout()
+    {
+        $scaleX = $this->width / 696;
+        $scaleY = $this->height / 709;
+        $scale = min($scaleX, $scaleY);
+        $hasPhoto = $this->hasReadableImage('visitor_photo');
+
+        $textX = $hasPhoto ? $this->scaledX(190) : $this->scaledX(36);
+        $rightPadding = $this->scaledX(24);
+        $maxTextWidth = max(1, $this->width - $textX - $rightPadding);
+        $nameSize = $this->fitNativeSize($this->data['visitor_name'], $maxTextWidth, 83, 50);
+        $companySize = $this->fitNativeSize($this->data['company_name'], $maxTextWidth, 58, 42);
+        $hostSize = $this->fitNativeSize('Host: ' . $this->data['host_name'], $maxTextWidth, 58, 42);
+        $validitySize = $this->fitNativeSize('Valid on: ' . $this->data['validity_date'], $maxTextWidth, 50, 38);
+
+        return [
+            'header' => [
+                'x' => 0,
+                'y' => $this->scaledY(34),
+                'width' => $this->width,
+                'height' => max(1, $this->scaledY(100)),
+                'text' => 'VISITOR',
+                'text_scale' => max(2, intval(round(5 * $scale)))
+            ],
+            'logo' => [
+                'max_width' => $this->scaledX(92),
+                'max_height' => $this->scaledY(82),
+                'right' => $this->scaledX(22),
+                'y' => $this->scaledY(43)
+            ],
+            'photo' => [
+                'x' => $this->scaledX(24),
+                'y' => $this->scaledY(170),
+                'width' => $this->scaledX(142),
+                'height' => $this->scaledY(170)
+            ],
+            'text_x' => $textX,
+            'lines' => [
+                'visitor_name' => [
+                    'text' => $this->data['visitor_name'],
+                    'y' => $this->scaledY(162),
+                    'size' => $nameSize,
+                    'preview_size' => $this->previewFontSize($nameSize),
+                    'max_width' => $maxTextWidth,
+                    'bold' => true
+                ],
+                'company_name' => [
+                    'text' => $this->data['company_name'],
+                    'y' => $this->scaledY(240),
+                    'size' => $companySize,
+                    'preview_size' => $this->previewFontSize($companySize),
+                    'max_width' => $maxTextWidth,
+                    'bold' => false
+                ],
+                'host_name' => [
+                    'text' => 'Host: ' . $this->data['host_name'],
+                    'y' => $this->scaledY(365),
+                    'size' => $hostSize,
+                    'preview_size' => $this->previewFontSize($hostSize),
+                    'max_width' => $maxTextWidth,
+                    'bold' => false
+                ],
+                'validity_date' => [
+                    'text' => 'Valid on: ' . $this->data['validity_date'],
+                    'y' => $this->scaledY(595),
+                    'size' => $validitySize,
+                    'preview_size' => $this->previewFontSize($validitySize),
+                    'max_width' => $maxTextWidth,
+                    'bold' => false
+                ]
+            ]
+        ];
+    }
+
+    protected function scaledX($value)
+    {
+        return intval(round($value * ($this->width / 696)));
+    }
+
+    protected function scaledY($value)
+    {
+        return intval(round($value * ($this->height / 709)));
+    }
+
+    protected function outlineSize($baseSize)
+    {
+        $scale = min($this->width / 696, $this->height / 709);
+        $target = $baseSize * $scale;
+        $sizes = [33, 38, 42, 46, 50, 58, 67, 75, 83, 92, 100, 117, 133, 150, 167, 200];
+        $selected = $sizes[0];
+
+        foreach ($sizes as $size) {
+            if (abs($size - $target) < abs($selected - $target)) {
+                $selected = $size;
+            }
+        }
+
+        return $selected;
+    }
+
+    protected function fitNativeSize($text, $maxWidth, $preferredSize, $minimumSize)
+    {
+        $preferred = $this->outlineSize($preferredSize);
+        $sizes = [200, 167, 150, 133, 117, 100, 92, 83, 75, 67, 58, 50, 46, 42, 38, 33];
+        $fallback = 33;
+
+        foreach ($sizes as $size) {
+            if ($size > $preferred || $size < $minimumSize) {
+                continue;
+            }
+
+            if ($this->nativeTextWidth($text, $size) <= $maxWidth) {
+                return $size;
+            }
+
+            $fallback = $size;
+        }
+
+        return $fallback;
+    }
+
+    protected function previewFontSize($nativeSize)
+    {
+        return max(18, intval(round($nativeSize * 0.68)));
+    }
+
+    protected function hasReadableImage($key)
+    {
+        return ! empty($this->data[$key]) && is_file($this->data[$key]);
+    }
+
+    protected function renderGraphics($includeText = false)
     {
         if (! extension_loaded('gd')) {
             throw new \RuntimeException('GD extension is required.');
@@ -52,193 +204,182 @@ class VisitorBadge implements CommandInterface
             throw new \RuntimeException('Unable to create visitor badge image.');
         }
 
+        $layout = $this->getLayout();
         $white = imagecolorallocate($image, 255, 255, 255);
         $black = imagecolorallocate($image, 0, 0, 0);
         $red = imagecolorallocate($image, 255, 0, 0);
 
         imagefill($image, 0, 0, $white);
 
-        /*
-         * Header
-         */
-        $headerHeight = 50;
-
         imagefilledrectangle(
             $image,
-            0,
-            0,
-            $this->width - 1,
-            $headerHeight - 1,
+            $layout['header']['x'],
+            $layout['header']['y'],
+            $layout['header']['x'] + $layout['header']['width'] - 1,
+            $layout['header']['y'] + $layout['header']['height'] - 1,
             $red
         );
 
         $this->drawHeaderText(
             $image,
-            'VISITOR',
-            $headerHeight
+            $layout['header'],
+            $white,
+            $red
         );
 
-        /*
-         * Institution logo
-         */
-        if (! empty($this->data['logo']) && is_file($this->data['logo'])) {
-            $logoData = file_get_contents($this->data['logo']);
-            $logo = @imagecreatefromstring($logoData);
-
-            if ($logo !== false) {
-                $sourceWidth = imagesx($logo);
-                $sourceHeight = imagesy($logo);
-
-                $maxLogoWidth = 72;
-                $maxLogoHeight = 62;
-
-                $scale = min(
-                    $maxLogoWidth / $sourceWidth,
-                    $maxLogoHeight / $sourceHeight
-                );
-
-                $logoWidth = intval($sourceWidth * $scale);
-                $logoHeight = intval($sourceHeight * $scale);
-
-                $logoX = $this->width - $logoWidth - 12;
-
-                /*
-         * Slightly overlap the logo into the badge body.
-         * Header height is currently 50px.
-         */
-                $logoY = 8;
-
-                imagecopyresampled(
-                    $image,
-                    $logo,
-                    $logoX,
-                    $logoY,
-                    0,
-                    0,
-                    $logoWidth,
-                    $logoHeight,
-                    $sourceWidth,
-                    $sourceHeight
-                );
-
-                imagedestroy($logo);
-            }
+        if ($this->hasReadableImage('logo')) {
+            $this->drawLogo($image, $layout['logo']);
         }
 
-        /*
-         * Main badge content
-         */
-        $contentTop = 65;
-        $textX = 20;
-
-        /*
-         * Optional visitor photo
-         */
-        if (
-            ! empty($this->data['visitor_photo']) &&
-            is_file($this->data['visitor_photo'])
-        ) {
-
-            $photoData = file_get_contents($this->data['visitor_photo']);
-            $photo = @imagecreatefromstring($photoData);
-
-            if ($photo !== false) {
-                $photoWidth = 120;
-                $photoHeight = 120;
-
-                imagecopyresampled(
-                    $image,
-                    $photo,
-                    20,
-                    $contentTop,
-                    0,
-                    0,
-                    $photoWidth,
-                    $photoHeight,
-                    imagesx($photo),
-                    imagesy($photo)
-                );
-
-                imagedestroy($photo);
-
-                $textX = 160;
-            }
+        if ($this->hasReadableImage('visitor_photo')) {
+            $this->drawPhoto($image, $layout['photo']);
         }
 
-        /*
-         * Visitor details
-         */
-        $this->drawScaledText(
-            $image,
-            $textX,
-            $contentTop,
-            $this->data['visitor_name'],
-            2
-        );
-
-        $this->drawScaledText(
-            $image,
-            $textX,
-            $contentTop + 35,
-            $this->data['company_name'],
-            1
-        );
-
-        $this->drawScaledText(
-            $image,
-            $textX,
-            $contentTop + 70,
-            'Host: ' . $this->data['host_name'],
-            1
-        );
-
-        /*
-         * Validity date
-         */
-        $this->drawScaledText(
-            $image,
-            $textX,
-            $this->height - 30,
-            'Valid on: ' . $this->data['validity_date'],
-            1
-        );
+        if ($includeText) {
+            foreach ($layout['lines'] as $line) {
+                $this->drawScaledText(
+                    $image,
+                    $layout['text_x'],
+                    $line['y'],
+                    $this->fitText($line['text'], $line['max_width'], $line['size']),
+                    $line['preview_size'],
+                    $line['max_width'],
+                    $black,
+                    $line['bold']
+                );
+            }
+        }
 
         return $image;
     }
 
-    protected function drawHeaderText($image, $text, $headerHeight)
+    protected function drawLogo($image, array $layout)
     {
-        $font = 5;
-        $scale = 2;
+        $logo = $this->loadImage($this->data['logo']);
 
-        $sourceWidth = imagefontwidth($font) * strlen($text);
-        $sourceHeight = imagefontheight($font);
+        if ($logo === false) {
+            return;
+        }
 
-        $targetWidth = $sourceWidth * $scale;
-        $targetHeight = $sourceHeight * $scale;
+        $sourceWidth = imagesx($logo);
+        $sourceHeight = imagesy($logo);
 
-        $temp = imagecreatetruecolor(
+        $scale = min(
+            $layout['max_width'] / $sourceWidth,
+            $layout['max_height'] / $sourceHeight
+        );
+
+        $logoWidth = max(1, intval($sourceWidth * $scale));
+        $logoHeight = max(1, intval($sourceHeight * $scale));
+        $logoX = $this->width - $logoWidth - $layout['right'];
+
+        imagecopyresampled(
+            $image,
+            $logo,
+            $logoX,
+            $layout['y'],
+            0,
+            0,
+            $logoWidth,
+            $logoHeight,
             $sourceWidth,
             $sourceHeight
         );
 
-        $black = imagecolorallocate($temp, 0, 0, 0);
-        $white = imagecolorallocate($temp, 255, 255, 255);
-        $red = imagecolorallocate($image, 255, 0, 0);
+        imagedestroy($logo);
+    }
 
-        imagefill($temp, 0, 0, $red);
+    protected function drawPhoto($image, array $layout)
+    {
+        $photo = $this->loadImage($this->data['visitor_photo']);
+
+        if ($photo === false) {
+            return;
+        }
+
+        imagecopyresampled(
+            $image,
+            $photo,
+            $layout['x'],
+            $layout['y'],
+            0,
+            0,
+            $layout['width'],
+            $layout['height'],
+            imagesx($photo),
+            imagesy($photo)
+        );
+
+        imagedestroy($photo);
+    }
+
+    protected function loadImage($path)
+    {
+        $imageData = file_get_contents($path);
+
+        if ($imageData === false) {
+            return false;
+        }
+
+        return @imagecreatefromstring($imageData);
+    }
+
+    protected function drawHeaderText($image, array $header, $color, $background)
+    {
+        $fontPath = $this->headerFontPath();
+
+        if ($fontPath !== null && function_exists('imagettftext')) {
+            $fontSize = max(18, intval($header['height'] * 0.54));
+
+            while (
+                $fontSize > 18 &&
+                $this->trueTypeTextWidth($fontPath, $fontSize, $header['text']) > ($header['width'] * 0.48)
+            ) {
+                $fontSize--;
+            }
+
+            $box = imagettfbbox($fontSize, 0, $fontPath, $header['text']);
+            $textWidth = abs($box[2] - $box[0]);
+            $textHeight = abs($box[7] - $box[1]);
+            $x = intval($header['x'] + (($header['width'] - $textWidth) / 2));
+            $y = intval($header['y'] + (($header['height'] - $textHeight) / 2) + $textHeight);
+
+            imagettftext(
+                $image,
+                $fontSize,
+                0,
+                $x,
+                $y,
+                $color,
+                $fontPath,
+                $header['text']
+            );
+
+            return;
+        }
+
+        $font = 5;
+        $scale = $header['text_scale'];
+        $sourceWidth = imagefontwidth($font) * strlen($header['text']);
+        $sourceHeight = imagefontheight($font);
+        $targetWidth = $sourceWidth * $scale;
+        $targetHeight = $sourceHeight * $scale;
+
+        $temp = imagecreatetruecolor($sourceWidth, $sourceHeight);
+
+        imagefill($temp, 0, 0, $background);
 
         imagestring(
             $temp,
             $font,
             0,
             0,
-            $text,
-            $white
+            $header['text'],
+            $color
         );
 
-        $x = intval(($this->width - $targetWidth) / 2);
-        $y = intval(($headerHeight - $targetHeight) / 2);
+        $x = intval($header['x'] + (($header['width'] - $targetWidth) / 2));
+        $y = intval($header['y'] + (($header['height'] - $targetHeight) / 2));
 
         imagecopyresized(
             $image,
@@ -256,42 +397,45 @@ class VisitorBadge implements CommandInterface
         imagedestroy($temp);
     }
 
-    protected function drawText($image, $x, $y, $text)
+    protected function drawScaledText($image, $x, $y, $text, $fontSize, $maxWidth, $color, $bold = false)
     {
-        $black = imagecolorallocate($image, 0, 0, 0);
-        $red = imagecolorallocate($image, 255, 0, 0);
+        $fontPath = $this->previewFontPath($bold);
 
-        imagestring(
-            $image,
-            5,
-            $x,
-            $y,
-            $text,
-            $black
-        );
+        if ($fontPath !== null && function_exists('imagettftext')) {
+            while ($fontSize > 12 && $this->trueTypeTextWidth($fontPath, $fontSize, $text) > $maxWidth) {
+                $fontSize--;
+            }
+
+            imagettftext(
+                $image,
+                $fontSize,
+                0,
+                $x,
+                $y + $fontSize,
+                $color,
+                $fontPath,
+                $text
+            );
+
+            return;
+        }
+
+        $this->drawBitmapText($image, $x, $y, $text, max(1, intval($fontSize / 12)), $maxWidth);
     }
 
-    protected function drawScaledText($image, $x, $y, $text, $scale = 2)
+    protected function drawBitmapText($image, $x, $y, $text, $scale, $maxWidth)
     {
         $font = 5;
-
         $textWidth = imagefontwidth($font) * strlen($text);
         $textHeight = imagefontheight($font);
 
-        $availableWidth = $this->width - $x - 10;
-
-        while (($textWidth * $scale) > $availableWidth && $scale > 1) {
+        while (($textWidth * $scale) > $maxWidth && $scale > 1) {
             $scale--;
         }
 
-        $temp = imagecreatetruecolor(
-            $textWidth,
-            $textHeight
-        );
-
+        $temp = imagecreatetruecolor(max(1, $textWidth), $textHeight);
         $white = imagecolorallocate($temp, 255, 255, 255);
         $black = imagecolorallocate($temp, 0, 0, 0);
-        $red = imagecolorallocate($image, 255, 0, 0);
 
         imagefill($temp, 0, 0, $white);
 
@@ -320,122 +464,69 @@ class VisitorBadge implements CommandInterface
         imagedestroy($temp);
     }
 
-    public function save($path)
+    protected function previewFontPath($bold = false)
     {
-        $image = $this->render();
+        $paths = $bold
+            ? [
+                'C:\\Windows\\Fonts\\arialbd.ttf',
+                'C:\\Windows\\Fonts\\calibrib.ttf',
+                'C:\\Windows\\Fonts\\georgiab.ttf'
+            ]
+            : [
+                'C:\\Windows\\Fonts\\arial.ttf',
+                'C:\\Windows\\Fonts\\calibri.ttf',
+                'C:\\Windows\\Fonts\\georgia.ttf'
+            ];
 
-        if (! imagepng($image, $path)) {
-            imagedestroy($image);
-
-            throw new \RuntimeException(
-                'Unable to save visitor badge image.'
-            );
-        }
-
-        imagedestroy($image);
-
-        return $path;
-    }
-    protected function renderGraphics()
-    {
-        if (! extension_loaded('gd')) {
-            throw new \RuntimeException('GD extension is required.');
-        }
-
-        $image = imagecreatetruecolor($this->width, $this->height);
-
-        if ($image === false) {
-            throw new \RuntimeException('Unable to create visitor badge image.');
-        }
-
-        $white = imagecolorallocate($image, 255, 255, 255);
-        $red = imagecolorallocate($image, 255, 0, 0);
-
-        imagefill($image, 0, 0, $white);
-
-        $headerHeight = 50;
-
-        imagefilledrectangle(
-            $image,
-            0,
-            0,
-            $this->width - 1,
-            $headerHeight - 1,
-            $red
-        );
-
-        $this->drawHeaderText(
-            $image,
-            'VISITOR',
-            $headerHeight
-        );
-
-        if (! empty($this->data['logo']) && is_file($this->data['logo'])) {
-            $logoData = file_get_contents($this->data['logo']);
-            $logo = @imagecreatefromstring($logoData);
-
-            if ($logo !== false) {
-                $sourceWidth = imagesx($logo);
-                $sourceHeight = imagesy($logo);
-
-                $maxLogoWidth = 72;
-                $maxLogoHeight = 62;
-
-                $scale = min(
-                    $maxLogoWidth / $sourceWidth,
-                    $maxLogoHeight / $sourceHeight
-                );
-
-                $logoWidth = intval($sourceWidth * $scale);
-                $logoHeight = intval($sourceHeight * $scale);
-
-                $logoX = $this->width - $logoWidth - 12;
-                $logoY = 8;
-
-                imagecopyresampled(
-                    $image,
-                    $logo,
-                    $logoX,
-                    $logoY,
-                    0,
-                    0,
-                    $logoWidth,
-                    $logoHeight,
-                    $sourceWidth,
-                    $sourceHeight
-                );
-
-                imagedestroy($logo);
+        foreach ($paths as $path) {
+            if (is_file($path)) {
+                return $path;
             }
         }
 
-        if (
-            ! empty($this->data['visitor_photo']) &&
-            is_file($this->data['visitor_photo'])
-        ) {
-            $photoData = file_get_contents($this->data['visitor_photo']);
-            $photo = @imagecreatefromstring($photoData);
+        return null;
+    }
 
-            if ($photo !== false) {
-                imagecopyresampled(
-                    $image,
-                    $photo,
-                    20,
-                    65,
-                    0,
-                    0,
-                    120,
-                    120,
-                    imagesx($photo),
-                    imagesy($photo)
-                );
+    protected function headerFontPath()
+    {
+        $paths = [
+            'C:\\Windows\\Fonts\\arialbd.ttf',
+            'C:\\Windows\\Fonts\\calibrib.ttf',
+            'C:\\Windows\\Fonts\\georgiab.ttf'
+        ];
 
-                imagedestroy($photo);
+        foreach ($paths as $path) {
+            if (is_file($path)) {
+                return $path;
             }
         }
 
-        return $image;
+        return null;
     }
+
+    protected function trueTypeTextWidth($fontPath, $fontSize, $text)
+    {
+        $box = imagettfbbox($fontSize, 0, $fontPath, $text);
+
+        return abs($box[2] - $box[0]);
+    }
+
+    protected function fitText($text, $maxWidth, $size)
+    {
+        $text = (string) $text;
+
+        while (strlen($text) > 1 && $this->nativeTextWidth($text, $size) > $maxWidth) {
+            $text = substr($text, 0, -1);
+        }
+
+        return $text;
+    }
+
+    protected function nativeTextWidth($text, $size)
+    {
+        return strlen($text) * ($size * 0.42);
+    }
+
     public function read()
     {
         $path = tempnam(
@@ -449,7 +540,7 @@ class VisitorBadge implements CommandInterface
             );
         }
 
-        $image = $this->renderGraphics();
+        $image = $this->renderGraphics(false);
 
         try {
             if (! imagepng($image, $path)) {
@@ -459,7 +550,6 @@ class VisitorBadge implements CommandInterface
             }
 
             $output = (new Command\Image($path, true))->read();
-
             $font = new Command\Font(
                 'brussels',
                 Command\Font::TYPE_OUTLINE
@@ -467,56 +557,33 @@ class VisitorBadge implements CommandInterface
 
             $output .= $font->read();
 
-            $textX = 20;
+            $layout = $this->getLayout();
+            $bold = null;
 
-            if (
-                ! empty($this->data['visitor_photo']) &&
-                is_file($this->data['visitor_photo'])
-            ) {
-                $textX = 160;
+            foreach ($layout['lines'] as $line) {
+                if ($bold !== $line['bold']) {
+                    $output .= (new Command\Bold($line['bold']))->read();
+                    $bold = $line['bold'];
+                }
+
+                $output .= (
+                    new Command\CharSize($line['size'], $font)
+                )->read();
+
+                $output .= (
+                    new Command\AbsoluteHorizontalPosition($layout['text_x'])
+                )->read();
+
+                $output .= (
+                    new Command\AbsoluteVerticalPosition($line['y'])
+                )->read();
+
+                $output .= $this->fitText(
+                    $line['text'],
+                    $line['max_width'],
+                    $line['size']
+                );
             }
-
-            $output .= (
-                new Command\AbsoluteHorizontalPosition($textX)
-            )->read();
-
-            $output .= (
-                new Command\AbsoluteVerticalPosition(65)
-            )->read();
-
-            $output .= $this->data['visitor_name'];
-
-            $output .= (
-                new Command\AbsoluteHorizontalPosition($textX)
-            )->read();
-
-            $output .= (
-                new Command\AbsoluteVerticalPosition(100)
-            )->read();
-
-            $output .= $this->data['company_name'];
-
-            $output .= (
-                new Command\AbsoluteHorizontalPosition($textX)
-            )->read();
-
-            $output .= (
-                new Command\AbsoluteVerticalPosition(135)
-            )->read();
-
-            $output .= 'Host: ' . $this->data['host_name'];
-
-            $output .= (
-                new Command\AbsoluteHorizontalPosition($textX)
-            )->read();
-
-            $output .= (
-                new Command\AbsoluteVerticalPosition(
-                    $this->height - 30
-                )
-            )->read();
-
-            $output .= 'Valid on: ' . $this->data['validity_date'];
 
             return $output;
         } finally {

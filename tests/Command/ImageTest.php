@@ -66,4 +66,32 @@ class ImageTest extends PHPUnit_Framework_TestCase
 
         @unlink($path);
     }
+
+    public function testDitherUsesErrorDiffusion()
+    {
+        $path = tempnam(sys_get_temp_dir(), 'label-printer-');
+
+        $image = imagecreatetruecolor(2, 1);
+        $gray = imagecolorallocate($image, 120, 120, 120);
+
+        imagesetpixel($image, 0, 0, $gray);
+        imagesetpixel($image, 1, 0, $gray);
+        imagepng($image, $path);
+        imagedestroy($image);
+
+        $withoutDither = new Command\Image($path, false);
+        $withDither = new Command\Image($path, true);
+
+        $this->assertEquals(
+            '1b33301b2a480200800000000000800000000000',
+            bin2hex($withoutDither->read())
+        );
+
+        $this->assertEquals(
+            '1b33301b2a480200800000000000000000000000',
+            bin2hex($withDither->read())
+        );
+
+        @unlink($path);
+    }
 }

@@ -47,6 +47,10 @@ class Image implements CommandInterface
             );
         }
 
+        $pixels = $this->dither
+            ? $this->createDitheredPixelMap($image)
+            : null;
+
         $width = imagesx($image);
         $height = imagesy($image);
 
@@ -66,7 +70,7 @@ class Image implements CommandInterface
                             continue;
                         }
 
-                        if ($this->isBlackPixel($image, $x, $y)) {
+                        if ($this->isBlackPixel($image, $x, $y, $pixels)) {
                             $byte |= (1 << (7 - $bit));
                         }
                     }
@@ -89,44 +93,92 @@ class Image implements CommandInterface
         return $output;
     }
 
-    protected function isBlackPixel($image, $x, $y)
+    protected function isBlackPixel($image, $x, $y, array $pixels = null)
+    {
+        if ($pixels !== null) {
+            return ! empty($pixels[$y][$x]);
+        }
+
+        return $this->brightnessAt($image, $x, $y) < 128;
+    }
+
+    protected function createDitheredPixelMap($image)
+    {
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $values = [];
+        $pixels = [];
+
+        for ($y = 0; $y < $height; $y++) {
+            $values[$y] = [];
+
+            for ($x = 0; $x < $width; $x++) {
+                $values[$y][$x] = $this->brightnessAt($image, $x, $y);
+            }
+        }
+
+        /*
+         * Floyd-Steinberg diffusion keeps photographic midtones more legible
+         * than an ordered matrix while still producing a 1-bit ESC/P payload.
+         */
+        for ($y = 0; $y < $height; $y++) {
+            $pixels[$y] = [];
+
+            for ($x = 0; $x < $width; $x++) {
+                $old = $values[$y][$x];
+                $new = $old < 128 ? 0 : 255;
+                $pixels[$y][$x] = ($new === 0);
+
+                $error = $old - $new;
+
+                $this->diffuseError($values, $width, $height, $x + 1, $y, $error, 7 / 16);
+                $this->diffuseError($values, $width, $height, $x - 1, $y + 1, $error, 3 / 16);
+                $this->diffuseError($values, $width, $height, $x, $y + 1, $error, 5 / 16);
+                $this->diffuseError($values, $width, $height, $x + 1, $y + 1, $error, 1 / 16);
+            }
+        }
+
+        return $pixels;
+    }
+
+    protected function diffuseError(array &$values, $width, $height, $x, $y, $error, $factor)
+    {
+        if ($x < 0 || $x >= $width || $y < 0 || $y >= $height) {
+            return;
+        }
+
+        $values[$y][$x] += $error * $factor;
+
+        if ($values[$y][$x] < 0) {
+            $values[$y][$x] = 0;
+        } elseif ($values[$y][$x] > 255) {
+            $values[$y][$x] = 255;
+        }
+    }
+
+    protected function brightnessAt($image, $x, $y)
     {
         $rgb = imagecolorat($image, $x, $y);
 
-        $red = ($rgb >> 16) & 0xFF;
-        $green = ($rgb >> 8) & 0xFF;
-        $blue = $rgb & 0xFF;
+        if (! imageistruecolor($image)) {
+            $colors = imagecolorsforindex($image, $rgb);
+            $red = $colors['red'];
+            $green = $colors['green'];
+            $blue = $colors['blue'];
+        } else {
+            $red = ($rgb >> 16) & 0xFF;
+            $green = ($rgb >> 8) & 0xFF;
+            $blue = $rgb & 0xFF;
+        }
 
         /*
          * Weighted luminance gives a more accurate grayscale
          * representation than simply averaging RGB.
          */
-        $brightness = (
+        return (
             ($red * 0.299) +
             ($green * 0.587) +
             ($blue * 0.114)
         );
-
-        if (! $this->dither) {
-            return $brightness < 128;
-        }
-
-        /*
-         * 4x4 Bayer ordered dithering matrix.
-         * Helps preserve facial detail and grayscale tones
-         * when printing on monochrome thermal media.
-         */
-        $matrix = [
-            [0, 8, 2, 10],
-            [12, 4, 14, 6],
-            [3, 11, 1, 9],
-            [15, 7, 13, 5]
-        ];
-
-        $threshold = (
-            ($matrix[$y % 4][$x % 4] + 0.5) / 16
-        ) * 255;
-
-        return $brightness < $threshold;
     }
 }
