@@ -39,6 +39,7 @@ class VisitorBadge implements CommandInterface
         $this->data = $data;
     }
 
+
     public function render()
     {
         if (! extension_loaded('gd')) {
@@ -335,7 +336,106 @@ class VisitorBadge implements CommandInterface
 
         return $path;
     }
+    protected function renderGraphics()
+    {
+        if (! extension_loaded('gd')) {
+            throw new \RuntimeException('GD extension is required.');
+        }
 
+        $image = imagecreatetruecolor($this->width, $this->height);
+
+        if ($image === false) {
+            throw new \RuntimeException('Unable to create visitor badge image.');
+        }
+
+        $white = imagecolorallocate($image, 255, 255, 255);
+        $red = imagecolorallocate($image, 255, 0, 0);
+
+        imagefill($image, 0, 0, $white);
+
+        $headerHeight = 50;
+
+        imagefilledrectangle(
+            $image,
+            0,
+            0,
+            $this->width - 1,
+            $headerHeight - 1,
+            $red
+        );
+
+        $this->drawHeaderText(
+            $image,
+            'VISITOR',
+            $headerHeight
+        );
+
+        if (! empty($this->data['logo']) && is_file($this->data['logo'])) {
+            $logoData = file_get_contents($this->data['logo']);
+            $logo = @imagecreatefromstring($logoData);
+
+            if ($logo !== false) {
+                $sourceWidth = imagesx($logo);
+                $sourceHeight = imagesy($logo);
+
+                $maxLogoWidth = 72;
+                $maxLogoHeight = 62;
+
+                $scale = min(
+                    $maxLogoWidth / $sourceWidth,
+                    $maxLogoHeight / $sourceHeight
+                );
+
+                $logoWidth = intval($sourceWidth * $scale);
+                $logoHeight = intval($sourceHeight * $scale);
+
+                $logoX = $this->width - $logoWidth - 12;
+                $logoY = 8;
+
+                imagecopyresampled(
+                    $image,
+                    $logo,
+                    $logoX,
+                    $logoY,
+                    0,
+                    0,
+                    $logoWidth,
+                    $logoHeight,
+                    $sourceWidth,
+                    $sourceHeight
+                );
+
+                imagedestroy($logo);
+            }
+        }
+
+        if (
+            ! empty($this->data['visitor_photo']) &&
+            is_file($this->data['visitor_photo'])
+        ) {
+            $photoData = file_get_contents($this->data['visitor_photo']);
+            $photo = @imagecreatefromstring($photoData);
+
+            if ($photo !== false) {
+                imagecopyresampled(
+                    $image,
+                    $photo,
+                    20,
+                    65,
+                    0,
+                    0,
+                    120,
+                    120,
+                    imagesx($photo),
+                    imagesy($photo)
+                );
+
+                imagedestroy($photo);
+            }
+        }
+
+        return $image;
+    }
     public function read()
     {
         $path = tempnam(
@@ -343,13 +443,84 @@ class VisitorBadge implements CommandInterface
             'visitor-badge-'
         );
 
-        $this->save($path);
+        if ($path === false) {
+            throw new \RuntimeException(
+                'Unable to create temporary visitor badge file.'
+            );
+        }
+
+        $image = $this->renderGraphics();
 
         try {
-            $command = new Command\Image($path, true);
+            if (! imagepng($image, $path)) {
+                throw new \RuntimeException(
+                    'Unable to save visitor badge image.'
+                );
+            }
 
-            return $command->read();
+            $output = (new Command\Image($path, true))->read();
+
+            $font = new Command\Font(
+                'brussels',
+                Command\Font::TYPE_OUTLINE
+            );
+
+            $output .= $font->read();
+
+            $textX = 20;
+
+            if (
+                ! empty($this->data['visitor_photo']) &&
+                is_file($this->data['visitor_photo'])
+            ) {
+                $textX = 160;
+            }
+
+            $output .= (
+                new Command\AbsoluteHorizontalPosition($textX)
+            )->read();
+
+            $output .= (
+                new Command\AbsoluteVerticalPosition(65)
+            )->read();
+
+            $output .= $this->data['visitor_name'];
+
+            $output .= (
+                new Command\AbsoluteHorizontalPosition($textX)
+            )->read();
+
+            $output .= (
+                new Command\AbsoluteVerticalPosition(100)
+            )->read();
+
+            $output .= $this->data['company_name'];
+
+            $output .= (
+                new Command\AbsoluteHorizontalPosition($textX)
+            )->read();
+
+            $output .= (
+                new Command\AbsoluteVerticalPosition(135)
+            )->read();
+
+            $output .= 'Host: ' . $this->data['host_name'];
+
+            $output .= (
+                new Command\AbsoluteHorizontalPosition($textX)
+            )->read();
+
+            $output .= (
+                new Command\AbsoluteVerticalPosition(
+                    $this->height - 30
+                )
+            )->read();
+
+            $output .= 'Valid on: ' . $this->data['validity_date'];
+
+            return $output;
         } finally {
+            imagedestroy($image);
             @unlink($path);
         }
     }
