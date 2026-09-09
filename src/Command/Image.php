@@ -6,17 +6,24 @@ class Image implements CommandInterface
 {
     protected $path;
 
-    public function __construct($path)
+    protected $dither;
+
+    public function __construct($path, $dither = false)
     {
         if (! is_file($path)) {
-            throw new \InvalidArgumentException('Image file does not exist.');
+            throw new \InvalidArgumentException(
+                'Image file does not exist.'
+            );
         }
 
         if (! extension_loaded('gd')) {
-            throw new \RuntimeException('GD extension is required.');
+            throw new \RuntimeException(
+                'GD extension is required.'
+            );
         }
 
         $this->path = $path;
+        $this->dither = (bool) $dither;
     }
 
     /**
@@ -27,13 +34,17 @@ class Image implements CommandInterface
         $imageData = file_get_contents($this->path);
 
         if ($imageData === false) {
-            throw new \RuntimeException('Unable to read image file.');
+            throw new \RuntimeException(
+                'Unable to read image file.'
+            );
         }
 
         $image = @imagecreatefromstring($imageData);
 
         if ($image === false) {
-            throw new \InvalidArgumentException('Unsupported or invalid image file.');
+            throw new \InvalidArgumentException(
+                'Unsupported or invalid image file.'
+            );
         }
 
         $width = imagesx($image);
@@ -55,15 +66,7 @@ class Image implements CommandInterface
                             continue;
                         }
 
-                        $rgb = imagecolorat($image, $x, $y);
-
-                        $red = ($rgb >> 16) & 0xFF;
-                        $green = ($rgb >> 8) & 0xFF;
-                        $blue = $rgb & 0xFF;
-
-                        $brightness = ($red + $green + $blue) / 3;
-
-                        if ($brightness < 128) {
+                        if ($this->isBlackPixel($image, $x, $y)) {
                             $byte |= (1 << (7 - $bit));
                         }
                     }
@@ -72,7 +75,9 @@ class Image implements CommandInterface
                 }
             }
 
-            $output .= (new BitImage(72, $width, $data))->read();
+            $output .= (
+                new BitImage(72, $width, $data)
+            )->read();
 
             if ($stripTop + 48 < $height) {
                 $output .= chr(10);
@@ -82,5 +87,46 @@ class Image implements CommandInterface
         imagedestroy($image);
 
         return $output;
+    }
+
+    protected function isBlackPixel($image, $x, $y)
+    {
+        $rgb = imagecolorat($image, $x, $y);
+
+        $red = ($rgb >> 16) & 0xFF;
+        $green = ($rgb >> 8) & 0xFF;
+        $blue = $rgb & 0xFF;
+
+        /*
+         * Weighted luminance gives a more accurate grayscale
+         * representation than simply averaging RGB.
+         */
+        $brightness = (
+            ($red * 0.299) +
+            ($green * 0.587) +
+            ($blue * 0.114)
+        );
+
+        if (! $this->dither) {
+            return $brightness < 128;
+        }
+
+        /*
+         * 4x4 Bayer ordered dithering matrix.
+         * Helps preserve facial detail and grayscale tones
+         * when printing on monochrome thermal media.
+         */
+        $matrix = [
+            [0, 8, 2, 10],
+            [12, 4, 14, 6],
+            [3, 11, 1, 9],
+            [15, 7, 13, 5]
+        ];
+
+        $threshold = (
+            ($matrix[$y % 4][$x % 4] + 0.5) / 16
+        ) * 255;
+
+        return $brightness < $threshold;
     }
 }

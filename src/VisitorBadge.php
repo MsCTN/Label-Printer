@@ -53,6 +53,7 @@ class VisitorBadge implements CommandInterface
 
         $white = imagecolorallocate($image, 255, 255, 255);
         $black = imagecolorallocate($image, 0, 0, 0);
+        $red = imagecolorallocate($image, 255, 0, 0);
 
         imagefill($image, 0, 0, $white);
 
@@ -67,7 +68,7 @@ class VisitorBadge implements CommandInterface
             0,
             $this->width - 1,
             $headerHeight - 1,
-            $black
+            $red
         );
 
         $this->drawHeaderText(
@@ -222,8 +223,9 @@ class VisitorBadge implements CommandInterface
 
         $black = imagecolorallocate($temp, 0, 0, 0);
         $white = imagecolorallocate($temp, 255, 255, 255);
+        $red = imagecolorallocate($image, 255, 0, 0);
 
-        imagefill($temp, 0, 0, $black);
+        imagefill($temp, 0, 0, $red);
 
         imagestring(
             $temp,
@@ -256,6 +258,7 @@ class VisitorBadge implements CommandInterface
     protected function drawText($image, $x, $y, $text)
     {
         $black = imagecolorallocate($image, 0, 0, 0);
+        $red = imagecolorallocate($image, 255, 0, 0);
 
         imagestring(
             $image,
@@ -287,6 +290,7 @@ class VisitorBadge implements CommandInterface
 
         $white = imagecolorallocate($temp, 255, 255, 255);
         $black = imagecolorallocate($temp, 0, 0, 0);
+        $red = imagecolorallocate($image, 255, 0, 0);
 
         imagefill($temp, 0, 0, $white);
 
@@ -342,7 +346,7 @@ class VisitorBadge implements CommandInterface
         $this->save($path);
 
         try {
-            $command = new Command\Image($path);
+            $command = new Command\Image($path, true);
 
             return $command->read();
         } finally {
