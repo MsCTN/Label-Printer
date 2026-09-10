@@ -94,7 +94,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
         $output = stream_get_contents($stream);
         fclose($stream);
 
-        $this->assertEquals(109786, strlen($output));
+        $this->assertEquals(109787, strlen($output));
         $this->assertEquals(
             '1b6961301b401b6961011b401b69531b697a8e0a3e004e02000000001b694d401b6941011b694b091b6964230077',
             bin2hex(substr($output, 0, 46))
@@ -103,6 +103,7 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
         $this->assertContains(chr(27) . 'iK' . chr(9), $output);
         $this->assertEquals(590, substr_count($output, 'w' . chr(1) . chr(90)));
         $this->assertEquals(590, substr_count($output, 'w' . chr(2) . chr(90)));
+        $this->assertEquals(chr(26), substr($output, -2, 1));
         $this->assertEquals(chr(12), substr($output, -1));
     }
 
@@ -131,11 +132,12 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
         $output = stream_get_contents($stream);
         fclose($stream);
 
-        $this->assertEquals(109786, strlen($output));
+        $this->assertEquals(109787, strlen($output));
         $this->assertContains(chr(27) . 'ia' . chr(1), $output);
         $this->assertContains(chr(27) . 'iK' . chr(9), $output);
         $this->assertEquals(590, substr_count($output, 'w' . chr(1) . chr(90)));
         $this->assertEquals(590, substr_count($output, 'w' . chr(2) . chr(90)));
+        $this->assertEquals(chr(26), substr($output, -2, 1));
         $this->assertEquals(chr(12), substr($output, -1));
     }
 
@@ -156,10 +158,11 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
 
         $output = $badge->read();
 
-        $this->assertEquals(94713, strlen($output));
+        $this->assertEquals(94714, strlen($output));
         $this->assertContains(chr(27) . 'ia' . chr(1), $output);
         $this->assertContains(chr(27) . 'iK' . chr(9), $output);
         $this->assertEquals(509, substr_count($output, 'w' . chr(1) . chr(90)));
         $this->assertEquals(509, substr_count($output, 'w' . chr(2) . chr(90)));
+        $this->assertEquals(chr(26), substr($output, -1));
     }
 }

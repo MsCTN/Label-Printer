@@ -868,6 +868,7 @@ class VisitorBadge implements CommandInterface
         $output .= chr(27) . 'iK' . chr(9);
         $output .= chr(27) . 'id' . $this->littleEndian16(35);
         $output .= $this->twoColorRasterRows($image);
+        $output .= chr(26);
 
         return $output;
     }
