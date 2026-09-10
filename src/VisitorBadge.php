@@ -69,10 +69,10 @@ class VisitorBadge implements CommandInterface
         $headerY = intval(round($margin / 2));
         $left = $margin;
         $right = $margin;
-        $textX = $hasPhoto ? $margin + $this->scaledX(252) : $margin + $this->scaledX(38);
+        $textX = $hasPhoto ? $margin + $this->scaledX(252) : $margin;
         $identityWidth = max(1, $this->width - $textX - $right);
         $footerWidth = max(1, $this->width - ($left * 2));
-        $nameSize = $this->fitNativeSize($this->data['visitor_name'], $identityWidth, 58, 42);
+        $nameSize = $this->fitNativeSize($this->data['visitor_name'], $identityWidth, $hasPhoto ? 58 : 50, 42);
         $companySize = $this->fitNativeSize($this->data['company_name'], $identityWidth, 38, 33);
         $hostLabelSize = $this->outlineSize(38);
         $validityLabelSize = $this->outlineSize(38);
@@ -141,7 +141,7 @@ class VisitorBadge implements CommandInterface
                 'company_name' => [
                     'text' => $this->data['company_name'],
                     'x' => $textX,
-                    'y' => $headerY + $this->scaledY(247),
+                    'y' => $headerY + $this->scaledY($hasPhoto ? 247 : 257),
                     'size' => $companySize,
                     'preview_size' => $this->previewFontSize($companySize),
                     'max_width' => $identityWidth,
