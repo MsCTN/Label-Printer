@@ -65,38 +65,41 @@ class VisitorBadge implements CommandInterface
     {
         $scale = $this->layoutScale();
         $hasPhoto = $this->hasReadableImage('visitor_photo');
-        $left = $this->scaledX(30);
-        $right = $this->scaledX(30);
-        $textX = $hasPhoto ? $this->scaledX(190) : $this->scaledX(54);
+        $margin = $this->marginDots();
+        $left = $margin;
+        $right = $margin;
+        $textX = $hasPhoto ? $margin + $this->scaledX(190) : $margin + $this->scaledX(18);
         $identityWidth = max(1, $this->width - $textX - $right);
         $footerWidth = max(1, $this->width - ($left * 2));
-        $nameSize = $this->fitNativeSize($this->data['visitor_name'], $identityWidth, 75, 50);
-        $companySize = $this->fitNativeSize($this->data['company_name'], $identityWidth, 50, 38);
-        $detailX = $hasPhoto ? $this->scaledX(238) : $this->scaledX(102);
-        $detailWidth = max(1, $this->width - $detailX - $right);
-        $hostSize = $this->fitNativeSize($this->data['host_name'], $detailWidth, 42, 33);
-        $validitySize = $this->fitNativeSize($this->data['validity_date'], $detailWidth, 42, 33);
+        $nameSize = $this->fitNativeSize($this->data['visitor_name'], $identityWidth, 67, 46);
+        $companySize = $this->fitNativeSize($this->data['company_name'], $identityWidth, 42, 33);
+        $detailX = $textX;
+        $valueX = $detailX + $this->scaledX(52);
+        $labelWidth = max(1, $this->width - $detailX - $right);
+        $valueWidth = max(1, $this->width - $valueX - $right);
+        $hostSize = $this->fitNativeSize($this->data['host_name'], $valueWidth, 38, 33);
+        $validitySize = $this->fitNativeSize($this->data['validity_date'], $valueWidth, 38, 33);
 
         return [
             'header' => [
-                'x' => 0,
-                'y' => $this->scaledY(22),
-                'width' => $this->width,
-                'height' => max(1, $this->scaledY(78)),
+                'x' => $margin,
+                'y' => $margin,
+                'width' => max(1, $this->width - ($margin * 2)),
+                'height' => max(1, $this->scaledY(96)),
                 'text' => 'VISITOR',
                 'text_scale' => max(2, intval(round(5 * $scale)))
             ],
             'logo' => [
-                'max_width' => $this->scaledX(108),
-                'max_height' => $this->scaledY(68),
-                'right' => $this->scaledX(26),
-                'y' => $this->scaledY(27)
+                'max_width' => $this->scaledX(116),
+                'max_height' => $this->scaledY(82),
+                'right' => $margin + $this->scaledX(14),
+                'y' => $margin + $this->scaledY(7)
             ],
             'photo' => [
-                'x' => $this->scaledX(26),
-                'y' => $this->scaledY(126),
-                'width' => $this->scaledX(145),
-                'height' => $this->scaledY(155),
+                'x' => $margin,
+                'y' => $margin + $this->scaledY(118),
+                'width' => $this->scaledX(176),
+                'height' => $this->scaledY(188),
                 'border' => $this->scaledX(3)
             ],
             'rule' => [
@@ -107,14 +110,14 @@ class VisitorBadge implements CommandInterface
             ],
             'icons' => [
                 'host' => [
-                    'x' => $hasPhoto ? $this->scaledX(190) : $this->scaledX(54),
-                    'y' => $this->scaledY(260),
-                    'size' => $this->scaledX(32)
+                    'x' => $detailX,
+                    'y' => $margin + $this->scaledY(272),
+                    'size' => $this->scaledX(30)
                 ],
                 'validity' => [
-                    'x' => $hasPhoto ? $this->scaledX(190) : $this->scaledX(54),
-                    'y' => $this->scaledY(393),
-                    'size' => $this->scaledX(32)
+                    'x' => $detailX,
+                    'y' => $margin + $this->scaledY(384),
+                    'size' => $this->scaledX(30)
                 ]
             ],
             'bottom_wave' => [
@@ -124,7 +127,7 @@ class VisitorBadge implements CommandInterface
                 'visitor_name' => [
                     'text' => $this->data['visitor_name'],
                     'x' => $textX,
-                    'y' => $this->scaledY(112),
+                    'y' => $margin + $this->scaledY(118),
                     'size' => $nameSize,
                     'preview_size' => $this->previewFontSize($nameSize),
                     'max_width' => $identityWidth,
@@ -133,7 +136,7 @@ class VisitorBadge implements CommandInterface
                 'company_name' => [
                     'text' => $this->data['company_name'],
                     'x' => $textX,
-                    'y' => $this->scaledY(171),
+                    'y' => $margin + $this->scaledY(174),
                     'size' => $companySize,
                     'preview_size' => $this->previewFontSize($companySize),
                     'max_width' => $identityWidth,
@@ -142,37 +145,37 @@ class VisitorBadge implements CommandInterface
                 'host_label' => [
                     'text' => 'Host:',
                     'x' => $detailX,
-                    'y' => $this->scaledY(240),
+                    'y' => $margin + $this->scaledY(232),
                     'size' => $this->outlineSize(38),
                     'preview_size' => $this->previewFontSize(38),
-                    'max_width' => $detailWidth,
+                    'max_width' => $labelWidth,
                     'bold' => false
                 ],
                 'host_name' => [
                     'text' => $this->data['host_name'],
-                    'x' => $detailX,
-                    'y' => $this->scaledY(283),
+                    'x' => $valueX,
+                    'y' => $margin + $this->scaledY(272),
                     'size' => $hostSize,
                     'preview_size' => $this->previewFontSize($hostSize),
-                    'max_width' => $detailWidth,
+                    'max_width' => $valueWidth,
                     'bold' => true
                 ],
                 'validity_label' => [
                     'text' => 'Valid on:',
                     'x' => $detailX,
-                    'y' => $this->scaledY(371),
+                    'y' => $margin + $this->scaledY(344),
                     'size' => $this->outlineSize(38),
                     'preview_size' => $this->previewFontSize(38),
-                    'max_width' => $detailWidth,
+                    'max_width' => $labelWidth,
                     'bold' => false
                 ],
                 'validity_date' => [
                     'text' => $this->data['validity_date'],
-                    'x' => $detailX,
-                    'y' => $this->scaledY(414),
+                    'x' => $valueX,
+                    'y' => $margin + $this->scaledY(384),
                     'size' => $validitySize,
                     'preview_size' => $this->previewFontSize($validitySize),
-                    'max_width' => $detailWidth,
+                    'max_width' => $valueWidth,
                     'bold' => true
                 ]
             ]
@@ -192,6 +195,11 @@ class VisitorBadge implements CommandInterface
     protected function layoutScale()
     {
         return min($this->width / 696, $this->height / 509);
+    }
+
+    protected function marginDots()
+    {
+        return 35;
     }
 
     protected function outlineSize($baseSize)
@@ -644,11 +652,11 @@ class VisitorBadge implements CommandInterface
         $fontPath = $this->headerFontPath();
 
         if ($fontPath !== null && function_exists('imagettftext')) {
-            $fontSize = max(18, intval($header['height'] * 0.54));
+            $fontSize = max(18, intval($header['height'] * 0.72));
 
             while (
                 $fontSize > 18 &&
-                $this->trueTypeTextWidth($fontPath, $fontSize, $header['text']) > ($header['width'] * 0.48)
+                $this->trueTypeTextWidth($fontPath, $fontSize, $header['text']) > ($header['width'] * 0.58)
             ) {
                 $fontSize--;
             }
@@ -849,19 +857,56 @@ class VisitorBadge implements CommandInterface
     public function read()
     {
         $image = $this->renderGraphics(true);
+        $ditherMask = $this->renderDitherMask();
         $printImage = null;
+        $printDitherMask = null;
 
         try {
             $printImage = $this->rotateForLandscapePrint($image);
+            $printDitherMask = $this->rotateForLandscapePrint($ditherMask);
 
-            return $this->renderTwoColorRaster($printImage);
+            return $this->renderTwoColorRaster($printImage, $printDitherMask);
         } finally {
             if ($printImage !== null) {
                 imagedestroy($printImage);
             }
 
+            if ($printDitherMask !== null) {
+                imagedestroy($printDitherMask);
+            }
+
+            imagedestroy($ditherMask);
             imagedestroy($image);
         }
+    }
+
+    protected function renderDitherMask()
+    {
+        $mask = imagecreatetruecolor($this->width, $this->height);
+
+        if ($mask === false) {
+            throw new \RuntimeException('Unable to create visitor badge dither mask.');
+        }
+
+        $white = imagecolorallocate($mask, 255, 255, 255);
+        $black = imagecolorallocate($mask, 0, 0, 0);
+
+        imagefill($mask, 0, 0, $white);
+
+        if ($this->hasReadableImage('visitor_photo')) {
+            $photo = $this->getLayout()['photo'];
+
+            imagefilledrectangle(
+                $mask,
+                $photo['x'],
+                $photo['y'],
+                $photo['x'] + $photo['width'] - 1,
+                $photo['y'] + $photo['height'] - 1,
+                $black
+            );
+        }
+
+        return $mask;
     }
 
     protected function rotateForLandscapePrint($image)
@@ -876,7 +921,7 @@ class VisitorBadge implements CommandInterface
         return $rotated;
     }
 
-    protected function renderTwoColorRaster($image)
+    protected function renderTwoColorRaster($image, $ditherMask = null)
     {
         if (imagesx($image) > $this->printerWidthDots()) {
             throw new \InvalidArgumentException(
@@ -893,7 +938,7 @@ class VisitorBadge implements CommandInterface
         $output .= chr(27) . 'iA' . chr(1);
         $output .= chr(27) . 'iK' . chr(9);
         $output .= chr(27) . 'id' . $this->littleEndian16(35);
-        $output .= $this->twoColorRasterRows($image);
+        $output .= $this->twoColorRasterRows($image, $ditherMask);
         $output .= chr(26);
 
         return $output;
@@ -911,9 +956,9 @@ class VisitorBadge implements CommandInterface
             chr(0);
     }
 
-    protected function twoColorRasterRows($image)
+    protected function twoColorRasterRows($image, $ditherMask = null)
     {
-        $blackRows = $this->blackRasterRows($image);
+        $blackRows = $this->blackRasterRows($image, $ditherMask);
         $redRows = $this->redRasterRows($image);
         $output = '';
         $height = imagesy($image);
@@ -926,7 +971,7 @@ class VisitorBadge implements CommandInterface
         return $output;
     }
 
-    protected function blackRasterRows($image)
+    protected function blackRasterRows($image, $ditherMask = null)
     {
         $width = imagesx($image);
         $height = imagesy($image);
@@ -953,6 +998,14 @@ class VisitorBadge implements CommandInterface
 
         for ($y = 0; $y < $height; $y++) {
             for ($x = 0; $x < $width; $x++) {
+                if (! $this->isDitherPixel($ditherMask, $x, $y)) {
+                    if ($values[$y][$x] < 190) {
+                        $this->setRasterPixel($rows[$y], $x, $width, true);
+                    }
+
+                    continue;
+                }
+
                 $old = $values[$y][$x];
                 $new = $old < 170 ? 0 : 255;
 
@@ -961,14 +1014,23 @@ class VisitorBadge implements CommandInterface
                 }
 
                 $error = $old - $new;
-                $this->diffuseRasterError($values, $width, $height, $x + 1, $y, $error, 7 / 16);
-                $this->diffuseRasterError($values, $width, $height, $x - 1, $y + 1, $error, 3 / 16);
-                $this->diffuseRasterError($values, $width, $height, $x, $y + 1, $error, 5 / 16);
-                $this->diffuseRasterError($values, $width, $height, $x + 1, $y + 1, $error, 1 / 16);
+                $this->diffuseRasterError($values, $width, $height, $x + 1, $y, $error, 7 / 16, $ditherMask);
+                $this->diffuseRasterError($values, $width, $height, $x - 1, $y + 1, $error, 3 / 16, $ditherMask);
+                $this->diffuseRasterError($values, $width, $height, $x, $y + 1, $error, 5 / 16, $ditherMask);
+                $this->diffuseRasterError($values, $width, $height, $x + 1, $y + 1, $error, 1 / 16, $ditherMask);
             }
         }
 
         return $rows;
+    }
+
+    protected function isDitherPixel($ditherMask, $x, $y)
+    {
+        if ($ditherMask === null) {
+            return false;
+        }
+
+        return $this->luminance($this->pixelChannels($ditherMask, $x, $y)) < 128;
     }
 
     protected function redRasterRows($image)
@@ -1052,9 +1114,13 @@ class VisitorBadge implements CommandInterface
         );
     }
 
-    protected function diffuseRasterError(array &$values, $width, $height, $x, $y, $error, $factor)
+    protected function diffuseRasterError(array &$values, $width, $height, $x, $y, $error, $factor, $ditherMask = null)
     {
         if ($x < 0 || $x >= $width || $y < 0 || $y >= $height) {
+            return;
+        }
+
+        if (! $this->isDitherPixel($ditherMask, $x, $y)) {
             return;
         }
 
