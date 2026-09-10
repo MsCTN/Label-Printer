@@ -94,19 +94,15 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
         $output = stream_get_contents($stream);
         fclose($stream);
 
-        $this->assertEquals(54551, strlen($output));
+        $this->assertEquals(109786, strlen($output));
         $this->assertEquals(
-            '1b6961301b401b33301b2a48b802',
-            bin2hex(substr($output, 0, 14))
+            '1b6961301b401b6961011b401b69531b697a8e0a3e004e02000000001b694d401b6941011b694b091b6964230077',
+            bin2hex(substr($output, 0, 46))
         );
-        $this->assertContains(chr(27) . 'k' . chr(10), $output);
-        $this->assertContains(chr(27) . 'E', $output);
-        $this->assertContains(chr(27) . 'X' . chr(0) . chr(75) . chr(0), $output);
-        $this->assertContains(chr(27) . 'X' . chr(0) . chr(50) . chr(0), $output);
-        $this->assertContains(chr(27) . 'X' . chr(0) . chr(38) . chr(0), $output);
-        $this->assertContains(chr(27) . '$' . chr(198) . chr(0), $output);
-        $this->assertContains(chr(27) . '(V' . chr(2) . chr(0) . chr(130) . chr(0), $output);
-        $this->assertContains(chr(27) . '(V' . chr(2) . chr(0) . chr(94) . chr(0), $output);
+        $this->assertContains(chr(27) . 'ia' . chr(1), $output);
+        $this->assertContains(chr(27) . 'iK' . chr(9), $output);
+        $this->assertEquals(590, substr_count($output, 'w' . chr(1) . chr(90)));
+        $this->assertEquals(590, substr_count($output, 'w' . chr(2) . chr(90)));
         $this->assertEquals(chr(12), substr($output, -1));
     }
 
@@ -135,11 +131,35 @@ class VisitorBadgeTest extends PHPUnit_Framework_TestCase
         $output = stream_get_contents($stream);
         fclose($stream);
 
-        $this->assertEquals(54551, strlen($output));
-        $this->assertContains(chr(27) . 'X' . chr(0) . chr(75) . chr(0), $output);
-        $this->assertContains(chr(27) . 'X' . chr(0) . chr(38) . chr(0), $output);
-        $this->assertContains(chr(27) . '$' . chr(48) . chr(0), $output);
-        $this->assertContains(chr(27) . '(V' . chr(2) . chr(0) . chr(130) . chr(0), $output);
+        $this->assertEquals(109786, strlen($output));
+        $this->assertContains(chr(27) . 'ia' . chr(1), $output);
+        $this->assertContains(chr(27) . 'iK' . chr(9), $output);
+        $this->assertEquals(590, substr_count($output, 'w' . chr(1) . chr(90)));
+        $this->assertEquals(590, substr_count($output, 'w' . chr(2) . chr(90)));
         $this->assertEquals(chr(12), substr($output, -1));
+    }
+
+    public function testPrintUsesRequestedHeightForRasterRows()
+    {
+        $badge = new VisitorBadge(
+            696,
+            509,
+            [
+                'visitor_name' => 'Stuart Burgess',
+                'company_name' => 'A&D Buildings Ltd',
+                'validity_date' => '09 Sept 2026',
+                'host_name' => 'John Smith',
+                'visitor_photo' => __DIR__ . '/fixtures/visitor-photo.png',
+                'logo' => __DIR__ . '/fixtures/institution-logo.png'
+            ]
+        );
+
+        $output = $badge->read();
+
+        $this->assertEquals(94713, strlen($output));
+        $this->assertContains(chr(27) . 'ia' . chr(1), $output);
+        $this->assertContains(chr(27) . 'iK' . chr(9), $output);
+        $this->assertEquals(509, substr_count($output, 'w' . chr(1) . chr(90)));
+        $this->assertEquals(509, substr_count($output, 'w' . chr(2) . chr(90)));
     }
 }

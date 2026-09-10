@@ -63,9 +63,7 @@ class VisitorBadge implements CommandInterface
 
     protected function getLayout()
     {
-        $scaleX = $this->width / 696;
-        $scaleY = $this->height / 590;
-        $scale = min($scaleX, $scaleY);
+        $scale = $this->layoutScale();
         $hasPhoto = $this->hasReadableImage('visitor_photo');
         $left = $this->scaledX(30);
         $right = $this->scaledX(30);
@@ -82,40 +80,40 @@ class VisitorBadge implements CommandInterface
         return [
             'header' => [
                 'x' => 0,
-                'y' => $this->scaledY(25),
+                'y' => $this->scaledY(22),
                 'width' => $this->width,
-                'height' => max(1, $this->scaledY(90)),
+                'height' => max(1, $this->scaledY(78)),
                 'text' => 'VISITOR',
                 'text_scale' => max(2, intval(round(5 * $scale)))
             ],
             'logo' => [
-                'max_width' => $this->scaledX(86),
-                'max_height' => $this->scaledY(70),
-                'right' => $this->scaledX(34),
-                'y' => $this->scaledY(34)
+                'max_width' => $this->scaledX(108),
+                'max_height' => $this->scaledY(68),
+                'right' => $this->scaledX(26),
+                'y' => $this->scaledY(27)
             ],
             'photo' => [
                 'x' => $this->scaledX(26),
-                'y' => $this->scaledY(132),
+                'y' => $this->scaledY(126),
                 'width' => $this->scaledX(145),
-                'height' => $this->scaledY(180),
+                'height' => $this->scaledY(155),
                 'border' => $this->scaledX(3)
             ],
             'rule' => [
                 'x' => $textX,
-                'y' => $this->scaledY(248),
+                'y' => $this->scaledY(214),
                 'width' => $this->scaledX(238),
                 'height' => max(1, $this->scaledY(2))
             ],
             'icons' => [
                 'host' => [
                     'x' => $hasPhoto ? $this->scaledX(190) : $this->scaledX(54),
-                    'y' => $this->scaledY(292),
+                    'y' => $this->scaledY(260),
                     'size' => $this->scaledX(32)
                 ],
                 'validity' => [
                     'x' => $hasPhoto ? $this->scaledX(190) : $this->scaledX(54),
-                    'y' => $this->scaledY(444),
+                    'y' => $this->scaledY(393),
                     'size' => $this->scaledX(32)
                 ]
             ],
@@ -126,7 +124,7 @@ class VisitorBadge implements CommandInterface
                 'visitor_name' => [
                     'text' => $this->data['visitor_name'],
                     'x' => $textX,
-                    'y' => $this->scaledY(130),
+                    'y' => $this->scaledY(112),
                     'size' => $nameSize,
                     'preview_size' => $this->previewFontSize($nameSize),
                     'max_width' => $identityWidth,
@@ -135,7 +133,7 @@ class VisitorBadge implements CommandInterface
                 'company_name' => [
                     'text' => $this->data['company_name'],
                     'x' => $textX,
-                    'y' => $this->scaledY(198),
+                    'y' => $this->scaledY(171),
                     'size' => $companySize,
                     'preview_size' => $this->previewFontSize($companySize),
                     'max_width' => $identityWidth,
@@ -144,7 +142,7 @@ class VisitorBadge implements CommandInterface
                 'host_label' => [
                     'text' => 'Host:',
                     'x' => $detailX,
-                    'y' => $this->scaledY(282),
+                    'y' => $this->scaledY(240),
                     'size' => $this->outlineSize(38),
                     'preview_size' => $this->previewFontSize(38),
                     'max_width' => $detailWidth,
@@ -153,7 +151,7 @@ class VisitorBadge implements CommandInterface
                 'host_name' => [
                     'text' => $this->data['host_name'],
                     'x' => $detailX,
-                    'y' => $this->scaledY(312),
+                    'y' => $this->scaledY(283),
                     'size' => $hostSize,
                     'preview_size' => $this->previewFontSize($hostSize),
                     'max_width' => $detailWidth,
@@ -162,7 +160,7 @@ class VisitorBadge implements CommandInterface
                 'validity_label' => [
                     'text' => 'Valid on:',
                     'x' => $detailX,
-                    'y' => $this->scaledY(434),
+                    'y' => $this->scaledY(371),
                     'size' => $this->outlineSize(38),
                     'preview_size' => $this->previewFontSize(38),
                     'max_width' => $detailWidth,
@@ -171,7 +169,7 @@ class VisitorBadge implements CommandInterface
                 'validity_date' => [
                     'text' => $this->data['validity_date'],
                     'x' => $detailX,
-                    'y' => $this->scaledY(464),
+                    'y' => $this->scaledY(414),
                     'size' => $validitySize,
                     'preview_size' => $this->previewFontSize($validitySize),
                     'max_width' => $detailWidth,
@@ -183,17 +181,22 @@ class VisitorBadge implements CommandInterface
 
     protected function scaledX($value)
     {
-        return intval(round($value * ($this->width / 696)));
+        return intval(round($value * $this->layoutScale()));
     }
 
     protected function scaledY($value)
     {
-        return intval(round($value * ($this->height / 590)));
+        return intval(round($value * $this->layoutScale()));
+    }
+
+    protected function layoutScale()
+    {
+        return min($this->width / 696, $this->height / 509);
     }
 
     protected function outlineSize($baseSize)
     {
-        $scale = min($this->width / 696, $this->height / 590);
+        $scale = $this->layoutScale();
         $target = $baseSize * $scale;
         $sizes = [33, 38, 42, 46, 50, 58, 67, 75, 83, 92, 100, 117, 133, 150, 167, 200];
         $selected = $sizes[0];
@@ -547,6 +550,8 @@ class VisitorBadge implements CommandInterface
             return;
         }
 
+        $this->enhancePhoto($photo);
+
         $white = imagecolorallocate($image, 255, 255, 255);
         $black = imagecolorallocate($image, 0, 0, 0);
         $border = isset($layout['border']) ? $layout['border'] : 0;
@@ -585,7 +590,7 @@ class VisitorBadge implements CommandInterface
         } else {
             $cropWidth = $sourceWidth;
             $cropHeight = intval($sourceWidth / $targetRatio);
-            $sourceY = intval(($sourceHeight - $cropHeight) / 2);
+            $sourceY = intval(($sourceHeight - $cropHeight) * 0.18);
         }
 
         imagecopyresampled(
@@ -602,6 +607,25 @@ class VisitorBadge implements CommandInterface
         );
 
         imagedestroy($photo);
+    }
+
+    protected function enhancePhoto($photo)
+    {
+        imagefilter($photo, IMG_FILTER_GRAYSCALE);
+        imagefilter($photo, IMG_FILTER_CONTRAST, -10);
+
+        if (function_exists('imageconvolution')) {
+            imageconvolution(
+                $photo,
+                [
+                    [-1, -1, -1],
+                    [-1, 16, -1],
+                    [-1, -1, -1]
+                ],
+                8,
+                0
+            );
+        }
     }
 
     protected function loadImage($path)
@@ -780,19 +804,7 @@ class VisitorBadge implements CommandInterface
 
     protected function headerFontPath()
     {
-        $paths = [
-            'C:\\Windows\\Fonts\\arialbd.ttf',
-            'C:\\Windows\\Fonts\\calibrib.ttf',
-            'C:\\Windows\\Fonts\\georgiab.ttf'
-        ];
-
-        foreach ($paths as $path) {
-            if (is_file($path)) {
-                return $path;
-            }
-        }
-
-        return null;
+        return $this->previewFontPath(true);
     }
 
     protected function trueTypeTextWidth($fontPath, $fontSize, $text)
@@ -831,79 +843,203 @@ class VisitorBadge implements CommandInterface
 
     protected function nativeTextWidth($text, $size)
     {
-        return strlen($text) * ($size * 0.42);
+        return strlen($text) * ($size * 0.62);
     }
 
     public function read()
     {
-        $path = tempnam(
-            sys_get_temp_dir(),
-            'visitor-badge-'
-        );
-
-        if ($path === false) {
-            throw new \RuntimeException(
-                'Unable to create temporary visitor badge file.'
-            );
-        }
-
-        $image = $this->renderGraphics(false);
+        $image = $this->renderGraphics(true);
 
         try {
-            if (! imagepng($image, $path)) {
-                throw new \RuntimeException(
-                    'Unable to save visitor badge image.'
-                );
-            }
-
-            $output = (new Command\Image($path, true))->read();
-            $font = new Command\Font(
-                'brussels',
-                Command\Font::TYPE_OUTLINE
-            );
-
-            $output .= $font->read();
-
-            $layout = $this->getLayout();
-            $bold = null;
-
-            foreach ($layout['lines'] as $line) {
-                if ($bold !== $line['bold']) {
-                    $output .= (new Command\Bold($line['bold']))->read();
-                    $bold = $line['bold'];
-                }
-
-                $output .= (
-                    new Command\CharSize($line['size'], $font)
-                )->read();
-
-                $text = $this->fitText(
-                    $line['text'],
-                    $line['max_width'],
-                    $line['size']
-                );
-
-                $x = $line['x'];
-
-                if (isset($line['align']) && $line['align'] === 'center') {
-                    $x = $this->centerNativeTextX($text, $line['size'], $line['x'], $line['max_width']);
-                }
-
-                $output .= (
-                    new Command\AbsoluteHorizontalPosition($x)
-                )->read();
-
-                $output .= (
-                    new Command\AbsoluteVerticalPosition($line['y'])
-                )->read();
-
-                $output .= $text;
-            }
-
-            return $output;
+            return $this->renderTwoColorRaster($image);
         } finally {
             imagedestroy($image);
-            @unlink($path);
         }
+    }
+
+    protected function renderTwoColorRaster($image)
+    {
+        $output = chr(27) . 'ia' . chr(1);
+        $output .= chr(27) . chr(64);
+        $output .= chr(27) . 'iS';
+        $output .= $this->rasterPrintInformation(imagesy($image));
+        $output .= chr(27) . 'iM' . chr(64);
+        $output .= chr(27) . 'iA' . chr(1);
+        $output .= chr(27) . 'iK' . chr(9);
+        $output .= chr(27) . 'id' . $this->littleEndian16(35);
+        $output .= $this->twoColorRasterRows($image);
+
+        return $output;
+    }
+
+    protected function rasterPrintInformation($rasterRows)
+    {
+        return chr(27) . 'iz' .
+            chr(142) .
+            chr(10) .
+            chr(62) .
+            chr(0) .
+            $this->littleEndian32($rasterRows) .
+            chr(0) .
+            chr(0);
+    }
+
+    protected function twoColorRasterRows($image)
+    {
+        $blackRows = $this->blackRasterRows($image);
+        $redRows = $this->redRasterRows($image);
+        $output = '';
+        $height = imagesy($image);
+
+        for ($y = 0; $y < $height; $y++) {
+            $output .= 'w' . chr(1) . chr(90) . $blackRows[$y];
+            $output .= 'w' . chr(2) . chr(90) . $redRows[$y];
+        }
+
+        return $output;
+    }
+
+    protected function blackRasterRows($image)
+    {
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $values = [];
+        $rows = [];
+
+        for ($y = 0; $y < $height; $y++) {
+            $values[$y] = [];
+
+            for ($x = 0; $x < $width; $x++) {
+                $channels = $this->pixelChannels($image, $x, $y);
+
+                if ($this->isRedPixel($channels)) {
+                    $values[$y][$x] = 255;
+                } else {
+                    $values[$y][$x] = $this->luminance($channels);
+                }
+            }
+        }
+
+        for ($y = 0; $y < $height; $y++) {
+            $rows[$y] = str_repeat(chr(0), 90);
+        }
+
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                $old = $values[$y][$x];
+                $new = $old < 170 ? 0 : 255;
+
+                if ($new === 0) {
+                    $this->setRasterPixel($rows[$y], $x, true);
+                }
+
+                $error = $old - $new;
+                $this->diffuseRasterError($values, $width, $height, $x + 1, $y, $error, 7 / 16);
+                $this->diffuseRasterError($values, $width, $height, $x - 1, $y + 1, $error, 3 / 16);
+                $this->diffuseRasterError($values, $width, $height, $x, $y + 1, $error, 5 / 16);
+                $this->diffuseRasterError($values, $width, $height, $x + 1, $y + 1, $error, 1 / 16);
+            }
+        }
+
+        return $rows;
+    }
+
+    protected function redRasterRows($image)
+    {
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $rows = [];
+
+        for ($y = 0; $y < $height; $y++) {
+            $rows[$y] = str_repeat(chr(0), 90);
+
+            for ($x = 0; $x < $width; $x++) {
+                if ($this->isRedPixel($this->pixelChannels($image, $x, $y))) {
+                    $this->setRasterPixel($rows[$y], $x, true);
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    protected function setRasterPixel(&$row, $x, $enabled)
+    {
+        if (! $enabled) {
+            return;
+        }
+
+        $deviceWidth = 720;
+        $offset = intval(($deviceWidth - $this->width) / 2);
+        $deviceX = $deviceWidth - 1 - ($offset + $x);
+        $byteIndex = intval($deviceX / 8);
+        $bit = 7 - ($deviceX % 8);
+        $row[$byteIndex] = chr(ord($row[$byteIndex]) | (1 << $bit));
+    }
+
+    protected function pixelChannels($image, $x, $y)
+    {
+        $rgb = imagecolorat($image, $x, $y);
+
+        if (! imageistruecolor($image)) {
+            $colors = imagecolorsforindex($image, $rgb);
+
+            return [
+                'red' => $colors['red'],
+                'green' => $colors['green'],
+                'blue' => $colors['blue']
+            ];
+        }
+
+        return [
+            'red' => ($rgb >> 16) & 0xFF,
+            'green' => ($rgb >> 8) & 0xFF,
+            'blue' => $rgb & 0xFF
+        ];
+    }
+
+    protected function isRedPixel(array $channels)
+    {
+        return $channels['red'] > 170 &&
+            $channels['green'] < 120 &&
+            $channels['blue'] < 120 &&
+            ($channels['red'] - max($channels['green'], $channels['blue'])) > 70;
+    }
+
+    protected function luminance(array $channels)
+    {
+        return (
+            ($channels['red'] * 0.299) +
+            ($channels['green'] * 0.587) +
+            ($channels['blue'] * 0.114)
+        );
+    }
+
+    protected function diffuseRasterError(array &$values, $width, $height, $x, $y, $error, $factor)
+    {
+        if ($x < 0 || $x >= $width || $y < 0 || $y >= $height) {
+            return;
+        }
+
+        $values[$y][$x] += $error * $factor;
+
+        if ($values[$y][$x] < 0) {
+            $values[$y][$x] = 0;
+        } elseif ($values[$y][$x] > 255) {
+            $values[$y][$x] = 255;
+        }
+    }
+
+    protected function littleEndian16($value)
+    {
+        return chr($value % 256) . chr(intval($value / 256));
+    }
+
+    protected function littleEndian32($value)
+    {
+        return chr($value % 256) .
+            chr(intval($value / 256) % 256) .
+            chr(intval($value / 65536) % 256) .
+            chr(intval($value / 16777216) % 256);
     }
 }
