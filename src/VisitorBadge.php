@@ -69,7 +69,7 @@ class VisitorBadge implements CommandInterface
         $headerY = intval(round($margin / 2));
         $left = $margin;
         $right = $margin;
-        $textX = $hasPhoto ? $margin + $this->scaledX(298) : $margin + $this->scaledX(38);
+        $textX = $hasPhoto ? $margin + $this->scaledX(270) : $margin + $this->scaledX(38);
         $identityWidth = max(1, $this->width - $textX - $right);
         $footerWidth = max(1, $this->width - ($left * 2));
         $nameSize = $this->fitNativeSize($this->data['visitor_name'], $identityWidth, 58, 42);
@@ -101,7 +101,7 @@ class VisitorBadge implements CommandInterface
                 'y' => $headerY
             ],
             'photo' => [
-                'x' => $margin + $this->scaledX(10),
+                'x' => 0,
                 'y' => $headerY + $this->scaledY(182),
                 'width' => $this->scaledX(252),
                 'height' => $this->scaledY(245),
@@ -655,99 +655,63 @@ class VisitorBadge implements CommandInterface
         $textAreaX = isset($header['text_area_x']) ? $header['text_area_x'] : $header['x'];
         $textAreaWidth = isset($header['text_area_width']) ? $header['text_area_width'] : $header['width'];
 
-        if ($fontPath !== null && function_exists('imagettftext')) {
-            $fontSize = max(18, intval($header['height'] * 0.72));
-
-            while (
-                $fontSize > 18 &&
-                $this->trueTypeTextWidth($fontPath, $fontSize, $header['text']) > ($textAreaWidth * 0.78)
-            ) {
-                $fontSize--;
-            }
-
-            $box = imagettfbbox($fontSize, 0, $fontPath, $header['text']);
-            $textWidth = abs($box[2] - $box[0]);
-            $textHeight = abs($box[7] - $box[1]);
-            $x = intval($textAreaX + (($textAreaWidth - $textWidth) / 2));
-            $y = intval($header['y'] + (($header['height'] - $textHeight) / 2) + $textHeight);
-
-            imagettftext(
-                $image,
-                $fontSize,
-                0,
-                $x,
-                $y,
-                $color,
-                $fontPath,
-                $header['text']
+        if ($fontPath === null || ! function_exists('imagettftext')) {
+            throw new \RuntimeException(
+                'A TrueType font is required for visitor badge printing. Install Open Sans or Arial, or pass font_regular_path and font_bold_path.'
             );
-
-            return;
         }
 
-        $font = 5;
-        $scale = $header['text_scale'];
-        $sourceWidth = imagefontwidth($font) * strlen($header['text']);
-        $sourceHeight = imagefontheight($font);
-        $targetWidth = $sourceWidth * $scale;
-        $targetHeight = $sourceHeight * $scale;
+        $fontSize = max(18, intval($header['height'] * 0.78));
 
-        $temp = imagecreatetruecolor($sourceWidth, $sourceHeight);
+        while (
+            $fontSize > 18 &&
+            $this->trueTypeTextWidth($fontPath, $fontSize, $header['text']) > ($textAreaWidth * 0.84)
+        ) {
+            $fontSize--;
+        }
 
-        imagefill($temp, 0, 0, $background);
+        $box = imagettfbbox($fontSize, 0, $fontPath, $header['text']);
+        $textWidth = abs($box[2] - $box[0]);
+        $textHeight = abs($box[7] - $box[1]);
+        $x = intval($textAreaX + (($textAreaWidth - $textWidth) / 2));
+        $y = intval($header['y'] + (($header['height'] - $textHeight) / 2) + $textHeight);
 
-        imagestring(
-            $temp,
-            $font,
-            0,
-            0,
-            $header['text'],
-            $color
-        );
-
-        $x = intval($textAreaX + (($textAreaWidth - $targetWidth) / 2));
-        $y = intval($header['y'] + (($header['height'] - $targetHeight) / 2));
-
-        imagecopyresized(
+        imagettftext(
             $image,
-            $temp,
+            $fontSize,
+            0,
             $x,
             $y,
-            0,
-            0,
-            $targetWidth,
-            $targetHeight,
-            $sourceWidth,
-            $sourceHeight
+            $color,
+            $fontPath,
+            $header['text']
         );
-
-        imagedestroy($temp);
     }
 
     protected function drawScaledText($image, $x, $y, $text, $fontSize, $maxWidth, $color, $bold = false)
     {
         $fontPath = $this->previewFontPath($bold);
 
-        if ($fontPath !== null && function_exists('imagettftext')) {
-            while ($fontSize > 12 && $this->trueTypeTextWidth($fontPath, $fontSize, $text) > $maxWidth) {
-                $fontSize--;
-            }
-
-            imagettftext(
-                $image,
-                $fontSize,
-                0,
-                $x,
-                $y + $fontSize,
-                $color,
-                $fontPath,
-                $text
+        if ($fontPath === null || ! function_exists('imagettftext')) {
+            throw new \RuntimeException(
+                'A TrueType font is required for visitor badge printing. Install Open Sans or Arial, or pass font_regular_path and font_bold_path.'
             );
-
-            return;
         }
 
-        $this->drawBitmapText($image, $x, $y, $text, max(1, intval($fontSize / 12)), $maxWidth);
+        while ($fontSize > 12 && $this->trueTypeTextWidth($fontPath, $fontSize, $text) > $maxWidth) {
+            $fontSize--;
+        }
+
+        imagettftext(
+            $image,
+            $fontSize,
+            0,
+            $x,
+            $y + $fontSize,
+            $color,
+            $fontPath,
+            $text
+        );
     }
 
     protected function drawBitmapText($image, $x, $y, $text, $scale, $maxWidth)
@@ -793,14 +757,46 @@ class VisitorBadge implements CommandInterface
 
     protected function previewFontPath($bold = false)
     {
+        $fontKey = $bold ? 'font_bold_path' : 'font_regular_path';
+
+        if (! empty($this->data[$fontKey]) && is_file($this->data[$fontKey])) {
+            return $this->data[$fontKey];
+        }
+
+        if (! empty($this->data['font_path']) && is_file($this->data['font_path'])) {
+            return $this->data['font_path'];
+        }
+
         $paths = $bold
             ? [
+                __DIR__ . '/../public/fonts/OpenSans-Bold.ttf',
+                __DIR__ . '/../resources/fonts/OpenSans-Bold.ttf',
+                'C:\\Windows\\Fonts\\OpenSans-Bold.ttf',
+                'C:\\Windows\\Fonts\\OpenSans\\OpenSans-Bold.ttf',
                 'C:\\Windows\\Fonts\\arialbd.ttf',
+                'C:\\Windows\\Fonts\\Arial Bold.ttf',
+                '/Library/Fonts/OpenSans-Bold.ttf',
+                '/Library/Fonts/Arial Bold.ttf',
+                '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
+                '/usr/share/fonts/truetype/open-sans/OpenSans-Bold.ttf',
+                '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf',
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
                 'C:\\Windows\\Fonts\\calibrib.ttf',
                 'C:\\Windows\\Fonts\\georgiab.ttf'
             ]
             : [
+                __DIR__ . '/../public/fonts/OpenSans-Regular.ttf',
+                __DIR__ . '/../resources/fonts/OpenSans-Regular.ttf',
+                'C:\\Windows\\Fonts\\OpenSans-Regular.ttf',
+                'C:\\Windows\\Fonts\\OpenSans\\OpenSans-Regular.ttf',
+                'C:\\Windows\\Fonts\\Arial.ttf',
                 'C:\\Windows\\Fonts\\arial.ttf',
+                '/Library/Fonts/OpenSans-Regular.ttf',
+                '/Library/Fonts/Arial.ttf',
+                '/System/Library/Fonts/Supplemental/Arial.ttf',
+                '/usr/share/fonts/truetype/open-sans/OpenSans-Regular.ttf',
+                '/usr/share/fonts/truetype/msttcorefonts/Arial.ttf',
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
                 'C:\\Windows\\Fonts\\calibri.ttf',
                 'C:\\Windows\\Fonts\\georgia.ttf'
             ];
