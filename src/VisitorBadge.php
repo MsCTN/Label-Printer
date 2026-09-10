@@ -849,12 +849,31 @@ class VisitorBadge implements CommandInterface
     public function read()
     {
         $image = $this->renderGraphics(true);
+        $printImage = null;
 
         try {
-            return $this->renderTwoColorRaster($image);
+            $printImage = $this->rotateForLandscapePrint($image);
+
+            return $this->renderTwoColorRaster($printImage);
         } finally {
+            if ($printImage !== null) {
+                imagedestroy($printImage);
+            }
+
             imagedestroy($image);
         }
+    }
+
+    protected function rotateForLandscapePrint($image)
+    {
+        $white = imagecolorallocate($image, 255, 255, 255);
+        $rotated = imagerotate($image, 90, $white);
+
+        if ($rotated === false) {
+            throw new \RuntimeException('Unable to rotate visitor badge for landscape printing.');
+        }
+
+        return $rotated;
     }
 
     protected function renderTwoColorRaster($image)
@@ -931,7 +950,7 @@ class VisitorBadge implements CommandInterface
                 $new = $old < 170 ? 0 : 255;
 
                 if ($new === 0) {
-                    $this->setRasterPixel($rows[$y], $x, true);
+                    $this->setRasterPixel($rows[$y], $x, $width, true);
                 }
 
                 $error = $old - $new;
@@ -956,7 +975,7 @@ class VisitorBadge implements CommandInterface
 
             for ($x = 0; $x < $width; $x++) {
                 if ($this->isRedPixel($this->pixelChannels($image, $x, $y))) {
-                    $this->setRasterPixel($rows[$y], $x, true);
+                    $this->setRasterPixel($rows[$y], $x, $width, true);
                 }
             }
         }
@@ -964,15 +983,20 @@ class VisitorBadge implements CommandInterface
         return $rows;
     }
 
-    protected function setRasterPixel(&$row, $x, $enabled)
+    protected function setRasterPixel(&$row, $x, $rasterWidth, $enabled)
     {
         if (! $enabled) {
             return;
         }
 
         $deviceWidth = 720;
-        $offset = intval(($deviceWidth - $this->width) / 2);
+        $offset = intval(($deviceWidth - $rasterWidth) / 2);
         $deviceX = $deviceWidth - 1 - ($offset + $x);
+
+        if ($deviceX < 0 || $deviceX >= $deviceWidth) {
+            return;
+        }
+
         $byteIndex = intval($deviceX / 8);
         $bit = 7 - ($deviceX % 8);
         $row[$byteIndex] = chr(ord($row[$byteIndex]) | (1 << $bit));
