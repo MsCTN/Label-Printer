@@ -69,7 +69,7 @@ class VisitorBadge implements CommandInterface
         $headerY = intval(round($margin / 2));
         $left = $margin;
         $right = $margin;
-        $textX = $hasPhoto ? $margin + $this->scaledX(270) : $margin + $this->scaledX(38);
+        $textX = $hasPhoto ? $margin + $this->scaledX(252) : $margin + $this->scaledX(38);
         $identityWidth = max(1, $this->width - $textX - $right);
         $footerWidth = max(1, $this->width - ($left * 2));
         $nameSize = $this->fitNativeSize($this->data['visitor_name'], $identityWidth, 58, 42);
@@ -102,7 +102,7 @@ class VisitorBadge implements CommandInterface
             ],
             'photo' => [
                 'x' => 0,
-                'y' => $headerY + $this->scaledY(182),
+                'y' => $headerY + $this->scaledY(197),
                 'width' => $this->scaledX(252),
                 'height' => $this->scaledY(245),
                 'border' => 0
@@ -116,12 +116,12 @@ class VisitorBadge implements CommandInterface
             'icons' => [
                 'host' => [
                     'x' => $textX,
-                    'y' => $headerY + $this->scaledY(320),
+                    'y' => $headerY + $this->scaledY(335),
                     'size' => $this->scaledX(30)
                 ],
                 'validity' => [
                     'x' => $textX,
-                    'y' => $headerY + $this->scaledY(408),
+                    'y' => $headerY + $this->scaledY(423),
                     'size' => $this->scaledX(30)
                 ]
             ],
@@ -132,7 +132,7 @@ class VisitorBadge implements CommandInterface
                 'visitor_name' => [
                     'text' => $this->data['visitor_name'],
                     'x' => $textX,
-                    'y' => $headerY + $this->scaledY(182),
+                    'y' => $headerY + $this->scaledY(197),
                     'size' => $nameSize,
                     'preview_size' => $this->previewFontSize($nameSize),
                     'max_width' => $identityWidth,
@@ -141,7 +141,7 @@ class VisitorBadge implements CommandInterface
                 'company_name' => [
                     'text' => $this->data['company_name'],
                     'x' => $textX,
-                    'y' => $headerY + $this->scaledY(232),
+                    'y' => $headerY + $this->scaledY(247),
                     'size' => $companySize,
                     'preview_size' => $this->previewFontSize($companySize),
                     'max_width' => $identityWidth,
@@ -150,7 +150,7 @@ class VisitorBadge implements CommandInterface
                 'host_label' => [
                     'text' => 'Host:',
                     'x' => $textX,
-                    'y' => $headerY + $this->scaledY(314),
+                    'y' => $headerY + $this->scaledY(329),
                     'size' => $hostLabelSize,
                     'preview_size' => $this->previewFontSize($hostLabelSize),
                     'max_width' => $identityWidth,
@@ -159,7 +159,7 @@ class VisitorBadge implements CommandInterface
                 'host_name' => [
                     'text' => $this->data['host_name'],
                     'x' => $hostValueX,
-                    'y' => $headerY + $this->scaledY(314),
+                    'y' => $headerY + $this->scaledY(329),
                     'size' => $hostSize,
                     'preview_size' => $this->previewFontSize($hostSize),
                     'max_width' => $hostWidth,
@@ -168,7 +168,7 @@ class VisitorBadge implements CommandInterface
                 'validity_label' => [
                     'text' => 'Valid on:',
                     'x' => $textX,
-                    'y' => $headerY + $this->scaledY(402),
+                    'y' => $headerY + $this->scaledY(417),
                     'size' => $validityLabelSize,
                     'preview_size' => $this->previewFontSize($validityLabelSize),
                     'max_width' => $identityWidth,
@@ -177,7 +177,7 @@ class VisitorBadge implements CommandInterface
                 'validity_date' => [
                     'text' => $this->data['validity_date'],
                     'x' => $validityValueX,
-                    'y' => $headerY + $this->scaledY(402),
+                    'y' => $headerY + $this->scaledY(417),
                     'size' => $validitySize,
                     'preview_size' => $this->previewFontSize($validitySize),
                     'max_width' => $validityWidth,
@@ -272,7 +272,6 @@ class VisitorBadge implements CommandInterface
         $red = imagecolorallocate($image, 255, 0, 0);
 
         imagefill($image, 0, 0, $white);
-        imagerectangle($image, 0, 0, $this->width - 1, $this->height - 1, $black);
 
         imagefilledrectangle(
             $image,
