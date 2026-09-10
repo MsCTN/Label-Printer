@@ -878,6 +878,13 @@ class VisitorBadge implements CommandInterface
 
     protected function renderTwoColorRaster($image)
     {
+        if (imagesx($image) > $this->printerWidthDots()) {
+            throw new \InvalidArgumentException(
+                'The printable badge height must be ' . $this->printerWidthDots() .
+                ' dots or less after landscape rotation. Pass the label length as width and the tape width as height.'
+            );
+        }
+
         $output = chr(27) . 'ia' . chr(1);
         $output .= chr(27) . chr(64);
         $output .= chr(27) . 'iS';
@@ -989,7 +996,7 @@ class VisitorBadge implements CommandInterface
             return;
         }
 
-        $deviceWidth = 720;
+        $deviceWidth = $this->printerWidthDots();
         $offset = intval(($deviceWidth - $rasterWidth) / 2);
         $deviceX = $deviceWidth - 1 - ($offset + $x);
 
@@ -1000,6 +1007,11 @@ class VisitorBadge implements CommandInterface
         $byteIndex = intval($deviceX / 8);
         $bit = 7 - ($deviceX % 8);
         $row[$byteIndex] = chr(ord($row[$byteIndex]) | (1 << $bit));
+    }
+
+    protected function printerWidthDots()
+    {
+        return 720;
     }
 
     protected function pixelChannels($image, $x, $y)
